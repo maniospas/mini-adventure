@@ -535,7 +535,7 @@
     <button class="menu-btn" id="continue-btn" onclick="continueGame()">Continue</button>
     <button class="menu-btn" onclick="openCardSearch()">Ledger</button>
 
-    <p style="margin-top:30px; opacity:0.6;">v1.0</p>
+    <p style="margin-top:30px; opacity:0.6;">pre-alpha</p>
 </div>
 
 
@@ -571,7 +571,15 @@
     <div class="modal">
         <h2>💀 Fallen!</h2>
         <p id="death-score"></p>
-        <button onclick="forceNewGame()">New Game</button>
+        <button onclick="forceNewGame()">Leave</button>
+    </div>
+</div>
+
+<div id="modal-death-adv" class="modal-backdrop">
+    <div class="modal">
+        <h2>💀 Lost interest!</h2>
+        <p id="death-score-adv"></p>
+        <button onclick="forceNewGame()">Leave</button>
     </div>
 </div>
 
@@ -1368,7 +1376,7 @@ function playEncounter(c) {
         logEvent(
             c.icon,
             `${c.name}: +${difficulty} 🏔️.`,
-            `Victory! ${difficulty} 🏔️`
+            `Victory! +${difficulty} 🏔️`
         );
     } else {
         let dmg = 1 + Math.floor(difficulty * Math.random());
@@ -1434,8 +1442,8 @@ function setBestScore(score) {
 }
 
 function endOfTurn() {
-    updateStats();
     if (adv.hp <= 0) {
+        updateStats();
         const score = adv.Adventure;
         setBestScore(score);
         document.getElementById("death-score").innerText = `Score: ${score} 🏔️\nBest: ${getBestScore()} 🏔️`;
@@ -1443,10 +1451,12 @@ function endOfTurn() {
         return;
     }
     if (adv.Adventure <= 0) {
+        adv.Adventure = 0;
+        updateStats();
         const score = 0;
         setBestScore(score);
-        document.getElementById("death-score").innerText = `Adventure score is zero - no fun anymore!\nBest: ${getBestScore()} 🏔️`;
-        document.getElementById("modal-death").classList.add("show");
+        document.getElementById("death-score-adv").innerText = `Adventure score is zero. This is not fun anymore!`;
+        document.getElementById("modal-death-adv").classList.add("show");
         return;
     }
     saveGame();
