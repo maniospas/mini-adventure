@@ -1205,12 +1205,38 @@ const treasures = [
 // ----------------------------------------------------
 // Card Rendering
 // ----------------------------------------------------
+function iconUrl(name) {
+    const file = name.toLowerCase().replace(/[^a-z0-9]+/g, "_") + ".png";
+    return `https://your-repo-url/icons/${file}`;
+}
+
+function imageBox(icon, name) {
+    const url = iconUrl(name);
+    return `
+        <div style="
+            height:120px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background-color:#ddd;
+            border:1px solid black;
+        ">
+            <div style="font-size:64px">
+                <img src="${url}"
+                    onerror="this.onerror=null; this.replaceWith(document.createTextNode('${icon}'))"
+                    style="max-width:100%; max-height:100%;">
+            </div>
+        </div>
+    `;
+}
+
+
+
 function cardButtonHTML(entry) {
     const c = entry.card;
 
     // Fixed height wrappers
     const titleBox = (str,type) => `<div style="height:35px; font-size:1.4em;"><b>${str}</b><div style="float:right">${type}</div></div>`;
-    let imageBox = icon => `<div style="height:120px; display:flex; align-items:center; justify-content:center; background-color: #ddd;border:1px solid black;"><div style="font-size:64px;">${icon}</div></div>`;
     const infoBox  = html => `<div style="height:30px; display:flex; align-items:center; justify-content:center; flex-direction:column; padding-top:10px;">${html}</div>`;
     const flavorBox = txt => `<div style="height:80px; font-size:0.9em; opacity:0.7; display:flex; align-items:center; text-align:left;">${txt}</div>`;
 
@@ -1218,7 +1244,6 @@ function cardButtonHTML(entry) {
     // ENCOUNTER
     // -------------------------
     if (entry.type === "enc") {
-        imageBox = icon => `<div style="height:120px; display:flex; align-items:center; justify-content:center; background-color: #844;border:1px solid black;"><div style="font-size:64px;">${icon}</div></div>`;
         const i = encounterIntensity(c.dc);
         const info = `
             <div">
@@ -1227,7 +1252,7 @@ function cardButtonHTML(entry) {
         `;
         return `
             ${titleBox(c.name, `${stars(i)}`)}
-            ${imageBox(c.icon)}
+            ${imageBox(c.icon, c.name)}
             ${infoBox("<b>ENCOUNTER</b>")}
             ${flavorBox(c.flavor)}
         `;
@@ -1238,7 +1263,7 @@ function cardButtonHTML(entry) {
         `;
         return `
             ${titleBox(c.name, `${stars(c.difficulty)}`)}
-            ${imageBox(c.icon)}
+            ${imageBox(c.icon, c.name)}
             ${infoBox(info)}
             ${flavorBox(c.flavor)}
         `;
@@ -1254,7 +1279,7 @@ function cardButtonHTML(entry) {
         `;
         return `
             ${titleBox(c.name, `${stars(c.difficulty)}`)}
-            ${imageBox(c.icon)}
+            ${imageBox(c.icon, c.name)}
             ${infoBox(info)}
             ${flavorBox(c.flavor)}
         `;
