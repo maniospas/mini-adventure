@@ -639,7 +639,7 @@ function startNewGameFromMenu() {
     hideMainMenu();
     localStorage.removeItem("tama_save");
     adv = createNewAdventurer();
-    adv.Toughness = adv.hp;
+    adv.Tough = adv.hp;
     statlessMode = false;
     logLines = [];
     generateChoices();
@@ -757,16 +757,16 @@ function loadGame() {
 function getTraitBonuses() {
     const b = adv.Backgrounds || [];
     const bonuses = {
-        strength: 0,
-        thinking: 0,
+        Strong: 0,
+        Clever: 0,
         damageReduction: 0,
         heartyHeal: false,
         luckyTriggered: false
     };
-    if (b.includes("Muscled")) bonuses.strength += Math.floor(adv.hp / 4);
+    if (b.includes("Muscled")) bonuses.Strong += Math.floor(adv.hp / 4);
     if (b.includes("Scholar")) {
         const hasArtifact = document.querySelector(".card-btn.sparkling") !== null;
-        if (hasArtifact) bonuses.thinking += 2;
+        if (hasArtifact) bonuses.Clever += 2;
     }
     if (b.includes("Collector")) {
         const cards = document.querySelectorAll(".card-btn");
@@ -775,7 +775,7 @@ function getTraitBonuses() {
             const s = Number(c.dataset.stars || 1);
             if (s >= 3) found = true;
         });
-        if (found) bonuses.strength += 2;
+        if (found) bonuses.Strong += 2;
     }
     if (b.includes("Lucky")) {
         const cards = document.querySelectorAll(".card-btn.encounter-card");
@@ -788,17 +788,17 @@ function getTraitBonuses() {
         });
 
         if (lethal) {
-            bonuses.strength += 4;
-            bonuses.thinking += 4;   // Added to match your display of 🧠 Lucky
+            bonuses.Strong += 4;
+            bonuses.Clever += 4;   // Added to match your display of 🧠 Lucky
             bonuses.luckyTriggered = true;
         }
     }
     if (b.includes("Armored")) bonuses.damageReduction = 1;
     if (b.includes("Glutton")) bonuses.heartyHeal = true;
-    if (b.includes("Thrill-seeker") && adv.hp <= 1.5) bonuses.strength += 6;
+    if (b.includes("Thrill-seeker") && adv.hp <= 1.5) bonuses.Strong += 6;
     if (b.includes("All-rounder")) {
-        if (adv.Strength === 0) bonuses.strength += 2;
-        if (adv.Thinking === 0) bonuses.thinking += 2;
+        if (adv.Strong === 0) bonuses.Strong += 2;
+        if (adv.Clever === 0) bonuses.Clever += 2;
     }
     return bonuses;
 }
@@ -862,9 +862,9 @@ function createNewAdventurer() {
 
     return {
         hp: 4 + Math.round(Math.random() * 2),
-        Strength: Math.round(Math.random() * 5),
-        Toughness: 0,
-        Thinking: Math.round(Math.random() * 5),
+        Strong: Math.round(Math.random() * 5),
+        Tough: 0,
+        Clever: Math.round(Math.random() * 5),
         Talent: Math.round(Math.random() * 5) + 3,
         Adventure: 1,
         Backgrounds: traits
@@ -887,14 +887,14 @@ function showFloatingMessage(html) {
 
 
 let adv = createNewAdventurer();
-adv.Toughness = adv.hp;
+adv.Tough = adv.hp;
 
 // NEW FLAG
 let statlessMode = false;
 
 if (!loadGame()) {
     adv = createNewAdventurer();
-    adv.Toughness = adv.hp;
+    adv.Tough = adv.hp;
     statlessMode = false;
 }
 
@@ -903,10 +903,10 @@ if (!loadGame()) {
 // ----------------------------------------------------
 function updateStats() {
     if (adv.hp < 0) adv.hp = 0;
-    if (adv.Toughness < 0) adv.Toughness = 0;
-    if (adv.hp > adv.Toughness) adv.hp = adv.Toughness;
+    if (adv.Tough < 0) adv.Tough = 0;
+    if (adv.hp > adv.Tough) adv.hp = adv.Tough;
 
-    const grey = Math.max(adv.Toughness - adv.hp, 0);
+    const grey = Math.max(adv.Tough - adv.hp, 0);
 
 
     if (statlessMode) {
@@ -928,13 +928,13 @@ function updateStats() {
     // --- hunter check ---
     const encountersNow = [...document.querySelectorAll(".card-btn.encounter-card")];
 
-    let strengthRelevant = false;
-    let thinkingRelevant = false;
+    let StrongRelevant = false;
+    let CleverRelevant = false;
 
     encountersNow.forEach(btn => {
         const html = btn.innerHTML;
-        if (html.includes("Strength")) strengthRelevant = true;
-        if (html.includes("Thinking")) thinkingRelevant = true;
+        if (html.includes("Strong")) StrongRelevant = true;
+        if (html.includes("Clever")) CleverRelevant = true;
     });
 
     const hunterHas = adv.Backgrounds && adv.Backgrounds.includes("Hunter");
@@ -964,20 +964,20 @@ function updateStats() {
         if (hasArtifact) thinkTraitIcons += " + 🧠🧠 Scholar <span style='color:#666'>boost from seeing an artifact</span>";
     }
     if (traitList.includes("All-rounder")) {
-        if (adv.Strength === 0) strTraitIcons += " + 💪💪 All-rounder <span style='color:#666'>boost to zero stats</span>";
-        if (adv.Thinking === 0) thinkTraitIcons += " + 🧠🧠 All-rounder <span style='color:#666'>boost to zero stats</span>";
+        if (adv.Strong === 0) strTraitIcons += " + 💪💪 All-rounder <span style='color:#666'>boost to zero stats</span>";
+        if (adv.Clever === 0) thinkTraitIcons += " + 🧠🧠 All-rounder <span style='color:#666'>boost to zero stats</span>";
     }
 
     document.getElementById("stats").innerHTML = `
         <table class="stat-table">
 
-            <!-- HP / Toughness -->
+            <!-- HP / Tough -->
             <tr>
                 <td>
-                    HP / Toughness&nbsp;&nbsp
+                    HP / Tough&nbsp;&nbsp
                 </td>
                 <td>
-                    ${"❤️".repeat(adv.hp)}${"🩶".repeat(Math.max(0, adv.Toughness - adv.hp))}
+                    ${"❤️".repeat(adv.hp)}${"🩶".repeat(Math.max(0, adv.Tough - adv.hp))}
                     ${traitList.includes("Glutton") 
                         ? "+ Glutton <span style='color:#666'>regen after some encounters</span>" 
                         : ""}
@@ -986,26 +986,26 @@ function updateStats() {
                     : ""}
                 </td>
             </tr>
-            <!-- Strength -->
+            <!-- Strong -->
             <tr>
                 <td>
-                    Strength 
-                    ${hunterHas && !strengthRelevant ? "" : ""}
+                    Strong 
+                    ${hunterHas && !StrongRelevant ? "" : ""}
                 </td>
                 <td>
-                    ${"💪".repeat(Math.max(0, Math.floor(adv.Strength)))}
+                    ${"💪".repeat(Math.max(0, Math.floor(adv.Strong)))}
                     ${strTraitIcons}
                 </td>
             </tr>
 
-            <!-- Thinking -->
+            <!-- Clever -->
             <tr>
                 <td>
-                    Thinking 
-                    ${hunterHas && !thinkingRelevant ? "" : ""}
+                    Clever 
+                    ${hunterHas && !CleverRelevant ? "" : ""}
                 </td>
                 <td>
-                    ${"🧠".repeat(Math.max(0, Math.floor(adv.Thinking)))}
+                    ${"🧠".repeat(Math.max(0, Math.floor(adv.Clever)))}
                     ${thinkTraitIcons}
                 </td>
             </tr>
@@ -1069,21 +1069,16 @@ function encounterIntensity(dc) {
 
 function logTailIncludes(str, count) {
     let start = Math.max(0, logLines.length - count);
-    for (let i = start; i < logLines.length; i++) {
+    for (let i = start; i < logLines.length; i++) 
         if (logLines[i].includes(str)) return true;
-    }
     return false;
 }
 
 function countInLastLines(patterns, countLines) {
     let start = Math.max(0, logLines.length - countLines);
     let total = 0;
-    for (let i = start; i < logLines.length; i++) {
-        const line = logLines[i];
-        for (const p of patterns) {
-            if (line.includes(p)) total++;
-        }
-    }
+    for (let i = start; i < logLines.length; i++)
+        for (const p of patterns) if (logLines[i].includes(p)) total++;
     return total;
 }
 
@@ -1093,83 +1088,84 @@ function countInLastLines(patterns, countLines) {
 // ----------------------------------------------------
 
 const encounters = [
-    { name:"Ratswarm", icon:"🐀🐀", stat:"Strength/Thinking", dc:10,
+    { name:"Ratswarm", icon:"🐀🐀", stat:"Strong/Clever", dc:10,
       flavor:"A wave of panicked rodents rushes past and over you." },
 
-    { name:"Stoneback", icon:"🐢", stat:"Strength", dc:13,
+    { name:"Stoneback", icon:"🐢", stat:"Strong", dc:13,
         flavor:"A turtle the size of a cart blocks the way. Push it away." },
 
-    { name:"Wildroot", icon:"🌿", stat:"Strength", dc:14,
+    { name:"Wildroot", icon:"🌿", stat:"Strong", dc:14,
         flavor:"A plant grabs your ankle! Resist its pull." },
 
-    { name:"Goblin Lurker", icon:"👺", stat:"Strength/Thinking", dc:11,
+    { name:"Goblin Lurker", icon:"👺", stat:"Strong/Clever", dc:11,
       flavor:"A sneering goblin watches with bright yellow eyes." },
 
-    { name:"Bandits", icon:"🪓", stat:"Strength/Thinking", dc:12,
+    { name:"Bandits", icon:"🪓", stat:"Strong/Clever", dc:12,
       flavor:"Their axes glint threateningly. Their heads even more." },
 
-    { name:"Hex Tosser", icon:"🧨", stat:"Thinking", dc:14,
+    { name:"Hex Tosser", icon:"🧨", stat:"Clever", dc:14,
       flavor:"The goblin rattles bones and hurls sparks all around." },
 
-    { name:"Mystic Obelisk", icon:"🔮", stat:"Thinking", dc:10,
-      flavor:"A floating relic that hums as it freezes the air." },
+    { name:"Mystic Obelisk", icon:"🔮", stat:"Clever", dc:10,
+      flavor:"It hums while freezing the air. Strength means nothing." },
 
-    { name:"Thin Chasm", icon:"🪨", stat:"Strength", dc:16,
+    { name:"Thin Chasm", icon:"🪨", stat:"Strong", dc:16,
       flavor:"Not only is the dust annoying, piles of stone collapse above." },
 
-    { name:"Duelist", icon:"⚔️", stat:"Strength/Thinking", dc:17,
+    { name:"Duelist", icon:"⚔️", stat:"Strong/Clever", dc:17,
       flavor:"A masked warrior challenges you without a word." },
 
-    { name:"Stram", icon:"🐏", stat:"Thinking", dc:20,
+    { name:"Stram", icon:"🐏", stat:"Clever", dc:20,
         flavor:"Cackling with a storm's static. Only hexes can tame this ram.",
         condition: () => {return logTailIncludes("Hex", 3);}},
 
-    { name:"Pestered", icon:"🌀", stat:"Strength/Thinking", dc:15,
+    { name:"Pestered", icon:"🌀", stat:"Strong/Clever", dc:15,
         flavor:"It would be too simple without the arch-nemesis showing up.",
         condition: () => {return false;}},
 
-    { name:"May-maze", icon:"🌀", stat:"Thinking", dc:18,
+    { name:"May-maze", icon:"🌀", stat:"Clever", dc:18,
       flavor:"Illusory corridors whisper riddles of how to leave." },
 
-    { name:"Sentinel", icon:"🌳", stat:"Strength", dc:19,
-      flavor:"Roots twist and branches whip the air. No thinking can save you.",
+    { name:"Sentinel", icon:"🌳", stat:"Strong", dc:19,
+      flavor:"Roots twist, branches whip the air. No thinking can save you.",
       condition: () => {return logTailIncludes("Wildroot", 3);}},
 
-    { name:"Trick Phantom", icon:"👻", stat:"Thinking", dc:12,
+    { name:"Trick Phantom", icon:"👻", stat:"Clever", dc:12,
         flavor:"A translucent figure bends reality into clever traps." },
 
-    { name:"Dragon", icon:"🐉", stat:"Strength/Thinking", dc:22,
+    { name:"Dragon", icon:"🐉", stat:"Strong/Clever", dc:22,
       flavor:"Dreams of fire and destruction. It strives to make these real." },
 
-    { name:"Hulky", icon:"👹", stat:"Strength/Thinking", dc:19,
+    { name:"Hulky", icon:"👹", stat:"Strong/Clever", dc:19,
       flavor:"An ogre smashes the ground as it charges." },
 
-    { name:"Boar Charge", icon:"🐗", stat:"Strength", dc:15,
-      flavor:"Two tusks barrel toward you. Would have been better roasted." },
+    { name:"Boar Charge", icon:"🐗", stat:"Strong", dc:15,
+      flavor:"Two tusks barrel toward you. Only thought: yummy if roasted." },
 
 ];
 
 
 const trainings = [
-    { name:"Powerlifting", icon:"🏋️", from:"Thinking", to:"Strength",
+    { name:"Powerlifting", icon:"🏋️", from:"Clever", to:"Strong",
       difficulty:1,
       flavor:"Muscles strain as you push past your limits." },
 
-    { name:"Meditate", icon:"🧘", from:"Strength", to:"Thinking",
+    { name:"Meditate", icon:"🧘", from:"Strong", to:"Clever",
       difficulty:1,
       flavor:"Breath, focus, and calm reshape your inner thoughts." },
 
-    { name:"Run Laps", icon:"🏃", from:"Strength", to:"Toughness",
+    { name:"Run Laps", icon:"🏃", from:"Strong", to:"Tough",
       difficulty:1,
       flavor:"Push your body through relentless repetition.",
-      condition: () => {return adv.Toughness<=4;}},
+      condition: () => {return adv.Tough<=4 && adv.Strong>=1 && logTailIncludes("damage", 1);}},
 
-    { name:"Martial Way", icon:"🥋", from:"Toughness", to:"Strength",
+    { name:"Martial Way", icon:"🥋", from:"Tough", to:"Strong",
       difficulty:2,
       flavor:"Training ends when it should. Not when I'm tired.",
-      condition: () => {return adv.Toughness>=4;}},
+      condition: () => {return adv.Tough>=4 && logTailIncludes("Victory!", 1);},
+    },
 
-    { name:"Puzzle Course", icon:"🧩", from:"Toughness", to:"Thinking",
+    { name:"Puzzle Course", icon:"🧩", from:"Tough", to:"Clever",
       difficulty:2,
       flavor:"Patterns unfold everywhere. Focus." },
 
@@ -1177,38 +1173,38 @@ const trainings = [
         name:"Reflection",
         icon:"📿",
         from:"Talent",
-        to:"Thinking",
+        to:"Clever",
         difficulty:3,
         flavor:"You are quite clever, now that you think about it.",
-        condition: () => {return logTailIncludes("Thinking", 5);}
+        condition: () => {return logTailIncludes("Clever", 2);}
     },
 
-    { name:"Powerdance", icon:"💃", from:"Talent", to:"Strength",
+    { name:"Powerdance", icon:"💃", from:"Talent", to:"Strong",
         difficulty:2,
         flavor:"A rhythmic sequence of steps; a movement technique.",
-        condition: () => {return adv.Thinking>=2;}},
+        condition: () => {return adv.Clever>=2 && logTailIncludes("Victory!", 1);}},
 
-    { name:"Balance", icon:"⚖️", from:"Thinking", to:"Strength",
+    { name:"Balance", icon:"⚖️", from:"Clever", to:"Strong",
         difficulty:3,
         flavor:"Don't look, feel! And, if you can't, think!",
-        condition: () => {return adv.Thinking>=5;} },
+        condition: () => {return adv.Clever>=5 && !logTailIncludes("Victory!", 3);} },
 
-    { name:"Survivor", icon:"🥊", from:"Talent", to:"Toughness",
+    { name:"Survivor", icon:"🥊", from:"Talent", to:"Tough",
         difficulty:3,
         flavor:"Every bruise has made you tougher. And it hurts.",
-        condition: () => adv.hp < adv.Toughness-2},
+        condition: () => adv.hp < adv.Tough-2},
 
-    { name:"Grit Teeth", icon:"🦷", from:"Talent", to:"Strength",
+    { name:"Grit Teeth", icon:"🦷", from:"Talent", to:"Strong",
         difficulty:2,
-        flavor:"There's always a last push. And a last push after. And another." ,
+        flavor:"There's always a last push. And one after. And another." ,
         condition: () => {return countInLastLines(["damage", "Victory!"], 3) >= 3;}},
 
-    { name:"Magiciano", icon:"🎩", from:"Talent", to:"Thinking",
+    { name:"Magiciano", icon:"🎩", from:"Talent", to:"Clever",
         difficulty:2,
         flavor:"Where's my hat? No, that's the rabbit. IT ATE THE HAT!" },
 
-    { name:"Wizardry", icon:"🧙‍♂️", from:"Talent", to:"Thinking",
-        difficulty:1,
+    { name:"Wizardry", icon:"🧙‍♂️", from:"Talent", to:"Clever",
+        difficulty:3,
         flavor:"Say, fought a dragon recently? You have developed mana.",
         condition: () => {return logTailIncludes("Dragon", 5);}},
 
@@ -1226,47 +1222,53 @@ const trainings = [
 
 const treasures = [
     { name:"Authority", icon:"👑",
-      difficulty:2, cost:{Thinking:2}, heal:3, adventure:3,
+      difficulty:2, cost:{Clever:2}, heal:3, adventure:3,
       flavor:"A faded memory of royalty stirs inside." },
 
     { name:"Titanbone Idol", icon:"🗿",
-      difficulty:1, cost:{Strength:2}, heal:3, adventure:0,
-      flavor:"Its echoing strength aids the strong." },
+      difficulty:1, cost:{Strong:2}, heal:3, adventure:0,
+      flavor:"Its echoing prayer aids the strong." },
 
     { name:"Fire Feather", icon:"🔥",
-      difficulty:1, cost:{Toughness:1}, heal:6, adventure:0,
+      difficulty:1, cost:{Tough:1}, heal:6, adventure:0,
       flavor:"Warm currents drift over your skin.",
-      condition: () => {return adv.hp<adv.Toughness-3;}},
+      condition: () => {return adv.hp<adv.Tough-3;}},
 
     { name:"Clockwork", icon:"⚙️",
-      difficulty:2, cost:{Thinking:2, Strength:2}, heal:0, adventure:6,
+      difficulty:2, cost:{Clever:2, Strong:2}, heal:0, adventure:6,
       flavor:"Springs and gears mesmerize you." },
 
     { name:"Deep Drink", icon:"🏺",
-      difficulty:1, cost:{Thinking:1}, heal:2, adventure:-4,
+      difficulty:1, cost:{Clever:1}, heal:2, adventure:-4,
       flavor:"A sip restores vitality as if from endless waters.",
       condition: () => {return adv.Adventure>4;}},
 
     { name:"Orb of Bleak", icon:"🧿",
-      difficulty:3, cost:{Strength:1, Thought:1}, heal:4, adventure:-4,
+      difficulty:3, cost:{Strong:1, Clever:1}, heal:4, adventure:-4,
       flavor:"Life is more precious than glory. Say the glorious.",
         condition: () => {return adv.Adventure>5;}},
 
     { name:"Frostbite", icon:"❄️",
-        difficulty:2, cost:{Toughness:2, Thinking:2}, heal:-2, adventure:6,
+        difficulty:2, cost:{Tough:2, Clever:2}, heal:-2, adventure:6,
         flavor:"Sudden frost steals away warmth, thought, and resolve.",
         condition: () => {return logTailIncludes("Obelisk", 5);}
     },
 
     { name:"Blightspore", icon:"🍄",
-        difficulty:3, cost:{Toughness:3}, heal:-3, adventure:9,
+        difficulty:3, cost:{Tough:3}, heal:-3, adventure:9,
         flavor:"Your skin will sprout spores. A staple of rats and goblins.",
         condition: () => {return logTailIncludes("Ratswarm", 5) || logTailIncludes("Goblin", 5) || logTailIncludes("Hex", 5);}
     },
 
     { name:"Dune Maw", icon:"🏜️",
-        difficulty:1, cost:{Strength:4}, heal:4, adventure:0,
-        flavor:"Shifting sand drains strength, protecting the desert lily."
+        difficulty:1, cost:{Strong:4}, heal:4, adventure:0,
+        flavor:"Shifting sand drains Strong, protecting the desert lily."
+    },
+
+    { name:"Treasure", icon:"🏜️",
+        difficulty:1, cost:{Strong:2}, heal:0, adventure:6,
+        flavor:"You discover shiny treasure in the encounter's remains.",
+        condition: () => {return logTailIncludes("Victory!", 1)&&(logTailIncludes("Bandit", 1) || logTailIncludes("Dragon", 3));}
     }
 ];
 
@@ -1338,18 +1340,19 @@ function cardButtonHTML(entry) {
     // Fixed height wrappers
     const titleBox = (str,type) => `<div style="height:35px; font-size:1.4em;text-align:left;padding-left:5px"><b>${str}</b><div style="float:right">${type}</div></div>`;
     const infoBox  = html => `<div style="height:30px; display:flex; align-items:center; justify-content:center; flex-direction:column; padding-top:10px;">${html}</div>`;
-    const flavorBox = txt => `<div style="height:80px; font-size:0.9em; opacity:0.7; display:flex; align-items:center; text-align:left;">${txt}</div>`;
-
+    const flavorBox = txt => `<div style="height:30px; font-size:0.9em; opacity:0.7; display:flex; align-items:center; text-align:left;">${txt}</div>`;
+    const conditional = c.condition?'<div style="color:#640;height:30px"><b>Conditional find</b></div>':'<div style="height:30px"></div>';
     // -------------------------
     // ENCOUNTER
     // -------------------------
     if (entry.type === "enc") {
         const i = encounterIntensity(c.dc);
-        const info = `<div"><span style="color:#822">Damage</span> or 🏔️ determined by your state and its rarity.</div>`;
+        const info = `<div><span style="color:#822">Damage</span> or 🏔️ determined by your state and its rarity.</div>`;
         return `
             ${titleBox(c.name, `${stars(i)}`)}
             ${imageBox(c.icon, c.name, entry.type)}
             ${infoBox("<b>ENCOUNTER</b>")}
+            ${conditional}
             ${flavorBox(c.flavor)}
         `;
     }
@@ -1359,6 +1362,7 @@ function cardButtonHTML(entry) {
             ${titleBox(c.name, `${stars(c.difficulty)}`)}
             ${imageBox(c.icon, c.name, entry.type)}
             ${infoBox(info)}
+            ${conditional}
             ${flavorBox(c.flavor)}
         `;
     }
@@ -1366,13 +1370,14 @@ function cardButtonHTML(entry) {
         const cost = Object.keys(c.cost).join(", ");
         let effects = `${cost} → `;
         if (c.heal !== 0) effects += ` ${c.heal} ❤️ `;
-        if (c.adventure > 0) effects += ` +${c.adventure} 🏔️`;
+        if (c.adventure > 0) effects += ` ${c.adventure} 🏔️`;
         if (c.adventure < 0) effects += ` ${c.adventure} 🏔️`;
         const info = `<div><b>${effects}</b></div>`;
         return `
             ${titleBox(c.name, `${stars(c.difficulty)}`)}
             ${imageBox(c.icon, c.name, entry.type)}
             ${infoBox(info)}
+            ${conditional}
             ${flavorBox(c.flavor)}
         `;
     }
@@ -1398,8 +1403,8 @@ function pickRandomAllowed(list) {
         let stars = 1;
         if (c.dc !== undefined) stars = encounterIntensity(c.dc);
         if (c.difficulty !== undefined) stars = c.difficulty;
-        let base = c.dc ? Math.min(1, adv.Strength / c.dc) : 1;
-        if (c.condition && !logTailIncludes(c.name, 5)) base *= 128;
+        let base = c.dc ? Math.min(1, adv.Strong / c.dc) : 1;
+        if (c.condition && !logTailIncludes(c.name, 20)) base *= 128;
         return base / Math.pow(2, Math.max(0, stars-adv.Adventure/10));
     });
     const total = weights.reduce((a, b) => a + b, 0);
@@ -1461,7 +1466,7 @@ function generateChoices() {
         if (entry.type === "train") btn.onclick = () => {animateCardSelection(btn, "", () => playTraining(entry.card));};
         if (entry.type === "treas") btn.onclick = () => {animateCardSelection(btn, "", () => playTreasure(entry.card));};
         btn.dataset.stars = (entry.type === "enc")?encounterIntensity(entry.card.dc):(entry.type === "train")? entry.card.difficulty:entry.card.difficulty;
-        if (entry.type === "treas") btn.classList.add("sparkling");
+        //if (entry.type === "treas") btn.classList.add("sparkling");
         choiceBox.appendChild(btn);
     });
 }
@@ -1476,8 +1481,8 @@ function pickBestStat(statString, bonuses) {
         let bonus = 0;
 
         // add stat-specific bonus
-        if (stat === "Strength") bonus = bonuses.strength || 0;
-        if (stat === "Thinking") bonus = bonuses.thinking || 0;
+        if (stat === "Strong") bonus = bonuses.Strong || 0;
+        if (stat === "Clever") bonus = bonuses.Clever || 0;
 
         const total = adv[stat] + bonus;
 
@@ -1497,8 +1502,8 @@ function playEncounter(c) {
     const roll = d20();
 
     let bonus = 2; // this value here serves as DIFFICULTY ADJUSTMENT (it is added to player rolls)
-    if (stat === "Strength") bonus += bonuses.strength || 0;
-    if (stat === "Thinking") bonus += bonuses.thinking || 0;
+    if (stat === "Strong") bonus += bonuses.Strong || 0;
+    if (stat === "Clever") bonus += bonuses.Clever || 0;
 
     const total = roll==1? roll: (roll + adv[stat] + bonus);
 
@@ -1507,7 +1512,7 @@ function playEncounter(c) {
     if (total > c.dc+d20()-10) {
         adv.Adventure += difficulty;
         if (bonuses.heartyHeal && Math.random()<0.1)
-            adv.hp = Math.min(adv.Toughness, adv.hp + 1);
+            adv.hp = Math.min(adv.Tough, adv.hp + 1);
 
         logEvent(
             c.icon,
@@ -1586,7 +1591,7 @@ function playTraining(c) {
     }
     else {
         adv[to] += movement;
-        if(to=="Toughness") adv.hp += movement;
+        if(to=="Tough") adv.hp += movement;
     }
     logEvent(c.icon, `${c.name}: ${from} → ${to}.`, `${from} → ${to}`);
     setTimeout(() => endOfTurn(), 1200);
@@ -1609,7 +1614,7 @@ function playTreasure(c) {
         adv.Talent += c.cost[stat];
     }
     adv.hp += c.heal;
-    if (adv.hp > adv.Toughness) adv.hp = adv.Toughness;
+    if (adv.hp > adv.Tough) adv.hp = adv.Tough;
     adv.Adventure += c.adventure;
     logEvent(c.icon, `${c.name}: Accepted you.`, `<span>It accepts you.</span>`);
     setTimeout(() => endOfTurn(), 1200);
@@ -1639,7 +1644,7 @@ function endOfTurn() {
         updateStats();
         const score = 0;
         setBestScore(score);
-        document.getElementById("death-score-adv").innerText = `Adventure score is zero...<br>This is not fun anymore!`;
+        document.getElementById("death-score-adv").innerHTML = `Adventure score is zero...<br>This is not fun anymore!`;
         document.getElementById("modal-death-adv").classList.add("show");
         return;
     }
