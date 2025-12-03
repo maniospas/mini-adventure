@@ -1266,7 +1266,7 @@ const treasures = [
     },
 
     { name:"Treasure", icon:"🏜️",
-        difficulty:1, cost:{Strong:2}, heal:0, adventure:6,
+        difficulty:1, cost:{Strong:2}, heal:0, adventure:3,
         flavor:"You discover shiny treasure in the encounter's remains.",
         condition: () => {return logTailIncludes("Victory!", 1)&&(logTailIncludes("Bandit", 1) || logTailIncludes("Dragon", 3));}
     }
