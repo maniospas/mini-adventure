@@ -63,11 +63,11 @@
 
     #floatingMessage {
         position: fixed;
-        top: 94px;
+        top: 20px;
         left: 50%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, 0);
         background: rgba(40,40,40,0.95);
-        padding: 40px 60px;
+        padding: 20px 60px;
         border-radius: 12px;
         border: 2px solid #666;
         color: #eee;
@@ -460,15 +460,15 @@
     }
 
     #adventureDisplay {
-        margin-top: 10px;
+        margin-right: 10px;
         padding: 6px 10px;
-        background: #383;
+        background: #565;
         border: 1px solid #555;
         border-radius: 6px;
         color: #eee;
         text-align: center;
         width: 175px;
-        float: right;
+        float: left;
     }
 
     /* Move modals to the top on mobile */
@@ -550,12 +550,13 @@
         <button id="asceticBtn" onclick="openAsceticModal()">Ascetic (+3 🏔️)</button>
         <button id="newgame" onclick="returnToMenu()">Leave</button>
     </div>
-
-    <div id="adventureDisplay">0 🏔️</div>
 </div>
 
 
+<div>
+<div id="adventureDisplay">0 🏔️</div>
 <div id="stats"></div>
+</div>
 
 <hr>
 
@@ -601,6 +602,20 @@
 
 
 <script>
+
+
+function preloadImages(files, callback) {
+    let loaded = 0;
+
+    files.forEach(src => {
+        const img = new Image();
+        img.onload = img.onerror = () => {
+            loaded++;
+            if (loaded === files.length) callback();
+        };
+        img.src = src;
+    });
+}
 
 // Show/hide continue button depending on save existence
 window.addEventListener("load", () => {
@@ -894,16 +909,18 @@ function updateStats() {
 
     if (statlessMode) {
         document.getElementById("stats").innerHTML = `
-            <div class="stat-block">
+            <div class="stat-block">&nbsp;<br>
                 ${"❤️".repeat(adv.hp)}${"🩶".repeat(grey)}<br>
-                🏔️ Adventure score: ${adv.Adventure}
+                🏔️ Adventure score: ${adv.Adventure}<br>&nbsp;
             </div>
         `;
         document.getElementById("asceticBtn").style.display = "none";
         document.getElementById("adventureDisplay").style.display = "none";
         return;
     }
-    document.getElementById("adventureDisplay").innerHTML = `<span>Adventure score:</span><br><span style="font-size:42px">${adv.Adventure} 🏔️</span>`;
+
+        document.getElementById("adventureDisplay").style.display = "inline";
+    document.getElementById("adventureDisplay").innerHTML = `<span>Adventure score:</span><br><span style="font-size:36px">${adv.Adventure} 🏔️</span>`;
 
 
     // --- hunter check ---
@@ -924,43 +941,72 @@ function updateStats() {
     const traitList = adv.Backgrounds || [];
     let strTraitIcons = "";
     let thinkTraitIcons = "";
-    if (traitList.includes("Muscled") && adv.hp>4) strTraitIcons += " + " + "💪".repeat(Math.floor(adv.hp / 4))+" Muscled (boost from health)";
+    if (traitList.includes("Muscled") && adv.hp>4) strTraitIcons += " + " + "💪".repeat(Math.floor(adv.hp / 4))+" Muscled <span style='color:#666'>boost from health</span>";
     if (traitList.includes("Collector")) {
         let rarityBoost = false;
         console.log(document.querySelectorAll(".card-btn"));
         document.querySelectorAll(".card-btn").forEach(btn => { if (Number(btn.dataset.stars) >=3 ) rarityBoost = true;});
-        if (rarityBoost) strTraitIcons += " + 💪💪 Collector";
+        if (rarityBoost) strTraitIcons += " + 💪💪 Collector <span style='color:#666'>boost from seeing a rare card</span>";
     }
     if (traitList.includes("Lucky")) {
         let luckyActive = false;
         document.querySelectorAll(".card-btn.encounter-card").forEach(btn => {
             if (Number(btn.dataset.stars) >= adv.hp) luckyActive = true;
         });
-        if (luckyActive) strTraitIcons += " + 💪 Lucky";
-        if (luckyActive) thinkTraitIcons += " + 🧠 Lucky";
+        if (luckyActive) strTraitIcons += " + 💪 Lucky <span style='color:#666'>boost from seeing lethal threat</span>";
+        if (luckyActive) thinkTraitIcons += " + 🧠 Lucky <span style='color:#666'>boost from seeing lethal threat</span>";
     }
-    if (traitList.includes("Thrill Seeker") && adv.hp <= 1.5) strTraitIcons += " + 💪💪💪💪💪💪 Thrill seeker";
+    if (traitList.includes("Thrill Seeker") && adv.hp <= 1.5) strTraitIcons += " + 💪💪💪💪💪💪 Thrill seeker<span style='color:#666'>boost one one HP</span>";
     if (traitList.includes("Scholar")) {
         const hasArtifact = document.querySelector(".card-btn.sparkling") !== null;
-        if (hasArtifact) thinkTraitIcons += " + 🧠🧠 Scholar";
+        if (hasArtifact) thinkTraitIcons += " + 🧠🧠 Scholar <span style='color:#666'>boost from seeing an artifact</span>";
     }
     if (traitList.includes("All-rounder")) {
-        if (adv.Strength === 0) strTraitIcons += " + 💪💪 All-rounder";
-        if (adv.Thinking === 0) thinkTraitIcons += " + 🧠🧠 All-rounder";
+        if (adv.Strength === 0) strTraitIcons += " + 💪💪 All-rounder <span style='color:#666'>boost to zero stats</span>";
+        if (adv.Thinking === 0) thinkTraitIcons += " + 🧠🧠 All-rounder <span style='color:#666'>boost to zero stats</span>";
     }
 
     document.getElementById("stats").innerHTML = `
-        <div class="stat-block">
-            HP (out of Toughness${traitList.includes("Hearty eater") ? ", Hearty eater: +1 health on some encounter wins" : ""})<br>
-            ${"❤️".repeat(adv.hp)}${"🩶".repeat(Math.max(0,adv.Toughness-adv.hp))}
-            <br>
-            Strength ${hunterHas && !strengthRelevant ? "" : ""}<br>
-            ${"💪".repeat(Math.max(0,Math.floor(adv.Strength)))}${strTraitIcons}<br>
+        <table class="stat-table">
 
-            Thinking ${hunterHas && !thinkingRelevant ? "" : ""}<br>
-            ${"🧠".repeat(Math.max(0,Math.floor(adv.Thinking)))}${thinkTraitIcons}<br>
-        </div>
-    `;
+            <!-- HP / Toughness -->
+            <tr>
+                <td>
+                    HP / Toughness&nbsp;&nbsp
+                </td>
+                <td>
+                    ${"❤️".repeat(adv.hp)}${"🩶".repeat(Math.max(0, adv.Toughness - adv.hp))}
+                    ${traitList.includes("Hearty eater") 
+                        ? "+ Hearty eater <span style='color:#666'>regen after some encounters</span>" 
+                        : ""}
+                </td>
+            </tr>
+            <!-- Strength -->
+            <tr>
+                <td>
+                    Strength 
+                    ${hunterHas && !strengthRelevant ? "" : ""}
+                </td>
+                <td>
+                    ${"💪".repeat(Math.max(0, Math.floor(adv.Strength)))}
+                    ${strTraitIcons}
+                </td>
+            </tr>
+
+            <!-- Thinking -->
+            <tr>
+                <td>
+                    Thinking 
+                    ${hunterHas && !thinkingRelevant ? "" : ""}
+                </td>
+                <td>
+                    ${"🧠".repeat(Math.max(0, Math.floor(adv.Thinking)))}
+                    ${thinkTraitIcons}
+                </td>
+            </tr>
+        </table>
+        `;
+
 
 
 
@@ -1080,7 +1126,7 @@ const encounters = [
       flavor:"An ogre smashes the ground as it charges." },
 
     { name:"Boar Charge", icon:"🐗", stat:"Strength", dc:15,
-      flavor:"A tusked beast barrels toward you. Would have been better roasted." },
+      flavor:"Two tusks barrel toward you. Would have been better roasted." },
 
 ];
 
@@ -1101,7 +1147,7 @@ const trainings = [
 
     { name:"Martial Way", icon:"🥋", from:"Toughness", to:"Strength",
       difficulty:2,
-      flavor:"Training ends when the schedule says so. Not when tired.",
+      flavor:"Training ends when it should. Not when I'm tired.",
       condition: () => {return adv.Toughness>=4;}},
 
     { name:"Puzzle Course", icon:"🧩", from:"Toughness", to:"Thinking",
@@ -1182,7 +1228,8 @@ const treasures = [
 
     { name:"Fire Feather", icon:"🔥",
       difficulty:1, cost:{Toughness:1}, heal:6, adventure:0,
-      flavor:"Warm currents drift over your skin." },
+      flavor:"Warm currents drift over your skin.",
+      condition: () => {return adv.Adventure>=10;}},
 
     { name:"Clockwork", icon:"⚙️",
       difficulty:2, cost:{Thinking:2, Strength:2}, heal:0, adventure:6,
@@ -1190,11 +1237,13 @@ const treasures = [
 
     { name:"Deep Drink", icon:"🏺",
       difficulty:1, cost:{Thinking:1}, heal:2, adventure:-4,
-      flavor:"A sip restores vitality as if from endless waters." },
+      flavor:"A sip restores vitality as if from endless waters.",
+      condition: () => {return adv.Adventure>=5;}},
 
     { name:"Orb of Bleak", icon:"🧿",
       difficulty:3, cost:{Strength:1, Thought:1}, heal:6, adventure:-12,
-      flavor:"Life is more precious than glory. Say the glorious." },
+      flavor:"Life is more precious than glory. Say the glorious.",
+        condition: () => {return adv.Adventure>=20;}},
 
     { name:"Frostbite", icon:"❄️",
         difficulty:2, cost:{Toughness:2, Thinking:2}, heal:-2, adventure:6,
@@ -1229,12 +1278,13 @@ const treasures = [
 // ----------------------------------------------------
 function iconUrl(name) {
     const file = name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
-    return `https://github.com/maniospas/mini-adventure/blob/main/img/${file}.png?raw=true`;
+    // https://raw.githubusercontent.com/maniospas/mini-adventure/main/img/${file}.png
+    return `img/${file}.png`;
 }
 
 function imageBox(icon, name, entry_type) {
     const url = iconUrl(name);
-    const encounterBg = `https://github.com/maniospas/mini-adventure/blob/main/img/${entry_type}.png?raw=true`;
+    const encounterBg = iconUrl(entry_type)
 
     return `
         <div style="
@@ -1269,6 +1319,22 @@ function imageBox(icon, name, entry_type) {
 }
 
 
+
+const imageFiles = [];
+encounters.forEach(c => {
+    const file = c.name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    imageFiles.push(`img/${file}.png`);
+});
+trainings.forEach(c => {
+    const file = c.name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    imageFiles.push(`img/${file}.png`);
+});
+treasures.forEach(c => {
+    const file = c.name.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+    imageFiles.push(`img/${file}.png`);
+});
+
+imageFiles.push("img/enc.png", "img/train.png", "img/treas.png");
 
 
 function cardButtonHTML(entry) {
@@ -1373,8 +1439,8 @@ function generateChoices() {
     ];
 
     pool.sort(() => Math.random() - 0.5);
-    if(Math.random()<0.2) pool = pool.slice(0,1);
-    else if(Math.random()<0.4) pool = pool.slice(0,2);
+    if(Math.random()<0.2 && adv.Adventure>5) pool = pool.slice(0,1);
+    else if(Math.random()<0.4 && adv.Adventure>5) pool = pool.slice(0,2);
     else pool = pool.slice(0,3);
     pool.forEach(entry => {
         encounteredCards.add(entry.card.name);
@@ -1506,6 +1572,7 @@ function setBestScore(score) {
 }
 
 function endOfTurn() {
+    saveGame();
     if (adv.hp <= 0) {
         updateStats();
         const score = adv.Adventure;
@@ -1523,7 +1590,6 @@ function endOfTurn() {
         document.getElementById("modal-death-adv").classList.add("show");
         return;
     }
-    saveGame();
     generateChoices();
     updateStats();
 }
@@ -1543,6 +1609,15 @@ function debounce(fn, delay) {
 window.addEventListener("DOMContentLoaded", () => {
     const searchBox = document.getElementById("ledger-search");
     searchBox.addEventListener("input", debounce(buildLedgerList, 250));
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+    preloadImages(imageFiles, () => {
+        console.log("All images preloaded.");
+        generateChoices();
+        updateStats();
+        saveGame();
+    });
 });
 
 </script>
