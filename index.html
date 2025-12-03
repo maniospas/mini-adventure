@@ -953,8 +953,8 @@ function updateStats() {
         document.querySelectorAll(".card-btn.encounter-card").forEach(btn => {
             if (Number(btn.dataset.stars) >= adv.hp) luckyActive = true;
         });
-        if (luckyActive) strTraitIcons += " + 💪 Lucky <span style='color:#666'>boost from seeing lethal threat</span>";
-        if (luckyActive) thinkTraitIcons += " + 🧠 Lucky <span style='color:#666'>boost from seeing lethal threat</span>";
+        if (luckyActive) strTraitIcons += " + 💪 Lucky <span style='color:#666'>boost from seeing a lethal threat</span>";
+        if (luckyActive) thinkTraitIcons += " + 🧠 Lucky <span style='color:#666'>boost from seeing a lethal threat</span>";
     }
     if (traitList.includes("Thrill Seeker") && adv.hp <= 1.5) strTraitIcons += " + 💪💪💪💪💪💪 Thrill seeker<span style='color:#666'>boost one one HP</span>";
     if (traitList.includes("Scholar")) {
