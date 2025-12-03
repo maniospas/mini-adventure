@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Mini Adventure</title>
 <style>
+    .star-icon {
+        color: gold;
+        width: 20px;
+        height: 20px;
+    }
+
     @media (max-height: 768px) {
         body {
             transform: scale(0.9);
@@ -593,6 +599,7 @@
     </div>
 </div>
 
+
 <script>
 
 // Show/hide continue button depending on save existence
@@ -992,7 +999,15 @@ function d20() {
 
 // ----------------------------------------------------
 function stars(n) {
-    return "⭐".repeat(n);
+    const svg = `
+        <svg viewBox="0 0 24 24" width="18" height="18" 
+             fill="#f7d343" stroke="#c8a200" stroke-width="1.2"
+             style="vertical-align: -3px; margin-right: 0px; margin-left: -10px">
+            <polygon points="12,2 15.2,9 22.5,9 16.7,13.8 
+                             18.9,21 12,16.8 5.1,21 7.3,13.8 
+                             1.5,9 8.8,9"/>
+        </svg>`;
+    return svg.repeat(n);
 }
 
 function encounterIntensity(dc) {
@@ -1008,7 +1023,7 @@ function encounterIntensity(dc) {
 
 const encounters = [
     { name:"Ratswarm", icon:"🐀🐀", stat:"Strength/Thinking", dc:10,
-      flavor:"A wave of panicked mice rushes past and over you." },
+      flavor:"A wave of panicked rodents rushes past and over you." },
 
     { name:"Stoneback", icon:"🐢", stat:"Strength", dc:13,
         flavor:"A turtle the size of a cart blocks the way. Push it away." },
@@ -1059,7 +1074,7 @@ const encounters = [
         flavor:"A translucent figure bends reality into clever traps." },
 
     { name:"Dragon", icon:"🐉", stat:"Strength/Thinking", dc:22,
-      flavor:"Dreams of fire and destruction. It strives to make its dreams a reality." },
+      flavor:"Dreams of fire and destruction. It strives to make these real." },
 
     { name:"Hulky", icon:"👹", stat:"Strength/Thinking", dc:19,
       flavor:"An ogre smashes the ground as it charges." },
@@ -1260,7 +1275,7 @@ function cardButtonHTML(entry) {
     const c = entry.card;
 
     // Fixed height wrappers
-    const titleBox = (str,type) => `<div style="height:35px; font-size:1.4em;"><b>${str}</b><div style="float:right">${type}</div></div>`;
+    const titleBox = (str,type) => `<div style="height:35px; font-size:1.4em;text-align:left;padding-left:5px"><b>${str}</b><div style="float:right">${type}</div></div>`;
     const infoBox  = html => `<div style="height:30px; display:flex; align-items:center; justify-content:center; flex-direction:column; padding-top:10px;">${html}</div>`;
     const flavorBox = txt => `<div style="height:80px; font-size:0.9em; opacity:0.7; display:flex; align-items:center; text-align:left;">${txt}</div>`;
 
