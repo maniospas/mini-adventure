@@ -1412,7 +1412,12 @@ function pickRandomAllowed(list) {
         let stars = 1;
         if (c.dc !== undefined) stars = encounterIntensity(c.dc);
         if (c.difficulty !== undefined) stars = c.difficulty;
-        const base = c.dc ? Math.min(1, adv.Strength / c.dc) : 1;
+        let base = c.dc ? Math.min(1, adv.Strength / c.dc) : 1;
+        if (c.condition) {
+            const box = document.getElementById("log");
+            const lines = box.innerText.trim().split("\n");
+            if (!lines.slice(-5).join(" ").includes(c.name)) base *= 128;
+        }
         return base / Math.pow(2, Math.max(0, stars-adv.Adventure/10));
     });
     const total = weights.reduce((a, b) => a + b, 0);
@@ -1439,14 +1444,28 @@ function generateChoices() {
         {type:"treas", card: pickRandomAllowed(treasures)},
     ];
 
+    // remove duplicates
+    const seen = new Set();
+    pool = pool.filter(p => {
+        const key = p.type + "::" + p.card.name;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+
+    // keep random
     pool.sort(() => Math.random() - 0.5);
     if(Math.random()<0.2 && adv.Adventure>5) pool = pool.slice(0,1);
     else if(Math.random()<0.4 && adv.Adventure>5) pool = pool.slice(0,2);
     else pool = pool.slice(0,3);
+
+    // apply pestered trait
     if (pool.length < 2 && adv.Backgrounds.includes("Pestered") && Math.random() < 0.8) {  // 80% chance
         const pestered = encounters.find(e => e.name === "Pestered");
         if (pestered) pool.push({ type: "enc", card: pestered });
     }
+
+    // create cards
     pool.forEach(entry => {
         encounteredCards.add(entry.card.name);
         const btn = document.createElement("button");
