@@ -467,7 +467,6 @@
         border-radius: 6px;
         color: #eee;
         text-align: center;
-        width: 175px;
         float: left;
     }
 
@@ -546,10 +545,8 @@
 
 
 <div id="topbar">
-    <div id="buttons">
-        <button id="asceticBtn" onclick="openAsceticModal()">Ascetic (+3 🏔️)</button>
-        <button id="newgame" onclick="returnToMenu()">Leave</button>
-    </div>
+        <button id="newgame" onclick="returnToMenu()">Leave</button><br>
+        <button id="asceticBtn" onclick="openAsceticModal()">Ascetic (+5 🏔️)</button>
 </div>
 
 
@@ -593,8 +590,8 @@
 <!-- Ascetic Path modal -->
 <div id="modal-ascetic" class="modal-backdrop">
     <div class="modal">
-        <h2>Stat-less ascetic?</h2>
-        <p><b>+3 🏔️ Adventure</b>, but stats other than Health & Adventure become hidden.</p>
+        <h2>Ascetic view?</h2>
+        <p style="text-align: left;">Gain: +5 🏔️ <br>But only see HP and score thereon.</p>
         <button onclick="confirmAscetic()">Walk the path</button>
         <button onclick="closeAsceticModal()">Cancel</button>
     </div>
@@ -796,8 +793,8 @@ function getTraitBonuses() {
         }
     }
     if (b.includes("Armored")) bonuses.damageReduction = 1;
-    if (b.includes("Hearty eater")) bonuses.heartyHeal = true;
-    if (b.includes("Thrill Seeker") && adv.hp <= 1.5) bonuses.strength += 6;
+    if (b.includes("Glutton")) bonuses.heartyHeal = true;
+    if (b.includes("Thrill-seeker") && adv.hp <= 1.5) bonuses.strength += 6;
     if (b.includes("All-rounder")) {
         if (adv.Strength === 0) bonuses.strength += 2;
         if (adv.Thinking === 0) bonuses.thinking += 2;
@@ -837,7 +834,7 @@ function closeAsceticModal() {
 
 function confirmAscetic() {
     statlessMode = true;
-    adv.Adventure += 3;
+    adv.Adventure += 5;
     closeAsceticModal();
     updateStats();
     document.getElementById("asceticBtn").style.display = "none";
@@ -849,8 +846,9 @@ function confirmAscetic() {
 // ----------------------------------------------------
 function createNewAdventurer() {
     const allTraits = [
-        "Muscled", "Scholar", "Collector", "Hearty eater",
-        "Lucky", "Armored", "Thrill Seeker", "All-rounder"
+        "Muscled", "Scholar", "Collector", "Glutton",
+        "Lucky", "Armored", "Thrill-seeker", "All-rounder", 
+        "Pestered"
     ];
     const traits = [];
     while (traits.length < 2) {
@@ -920,7 +918,7 @@ function updateStats() {
     }
 
         document.getElementById("adventureDisplay").style.display = "inline";
-    document.getElementById("adventureDisplay").innerHTML = `<span>Adventure score:</span><br><span style="font-size:36px">${adv.Adventure} 🏔️</span>`;
+    document.getElementById("adventureDisplay").innerHTML = `<span>Adventure score</span><br><span style="font-size:36px">${adv.Adventure} 🏔️</span>`;
 
 
     // --- hunter check ---
@@ -956,7 +954,7 @@ function updateStats() {
         if (luckyActive) strTraitIcons += " + 💪 Lucky <span style='color:#666'>boost from seeing a lethal threat</span>";
         if (luckyActive) thinkTraitIcons += " + 🧠 Lucky <span style='color:#666'>boost from seeing a lethal threat</span>";
     }
-    if (traitList.includes("Thrill Seeker") && adv.hp <= 1.5) strTraitIcons += " + 💪💪💪💪💪💪 Thrill seeker<span style='color:#666'>boost one one HP</span>";
+    if (traitList.includes("Thrill-seeker") && adv.hp <= 1.5) strTraitIcons += " + 💪💪💪💪💪💪 Thrill-seeker <span style='color:#666'>boost one one HP</span>";
     if (traitList.includes("Scholar")) {
         const hasArtifact = document.querySelector(".card-btn.sparkling") !== null;
         if (hasArtifact) thinkTraitIcons += " + 🧠🧠 Scholar <span style='color:#666'>boost from seeing an artifact</span>";
@@ -976,9 +974,12 @@ function updateStats() {
                 </td>
                 <td>
                     ${"❤️".repeat(adv.hp)}${"🩶".repeat(Math.max(0, adv.Toughness - adv.hp))}
-                    ${traitList.includes("Hearty eater") 
-                        ? "+ Hearty eater <span style='color:#666'>regen after some encounters</span>" 
+                    ${traitList.includes("Glutton") 
+                        ? "+ Glutton <span style='color:#666'>regen after some encounters</span>" 
                         : ""}
+                    ${traitList.includes("Armored") 
+                    ? "+ 🛡️ Armored <span style='color:#666'>reduces >1 damage</span>" 
+                    : ""}
                 </td>
             </tr>
             <!-- Strength -->
@@ -1104,8 +1105,12 @@ const encounters = [
             return last5.includes("Hex");
         }},
 
+    { name:"Pestered", icon:"🌀", stat:"Strength/Thinking", dc:15,
+        flavor:"It would be too simple without the arch-nemesis showing up.",
+        condition: () => {return false;}},
+
     { name:"May-maze", icon:"🌀", stat:"Thinking", dc:18,
-      flavor:"Illusory corridors whisper secrets, and riddles of how to leave." },
+      flavor:"Illusory corridors whisper riddles of how to leave." },
 
     { name:"Sentinel", icon:"🌳", stat:"Strength", dc:19,
       flavor:"Roots twist and branches whip the air. No thinking can save you.",
@@ -1191,13 +1196,9 @@ const trainings = [
             const box = document.getElementById("log");
             const lines = box.innerText.trim().split("\n");
             const last3 = lines.slice(-3).join(" ");
-
             let count = 0;
-            // count occurrences of "damage"
-            count += (last3.match(/damage/g) || []).length;
-            // count occurrences of "Gained adventure"
-            count += (last3.match(/Gained adventure/g) || []).length;
-
+            count += (last3.match(/damage./g) || []).length;
+            count += (last3.match(/Victory!/g) || []).length;
             return count >= 3;
         }},
 
@@ -1243,7 +1244,7 @@ const treasures = [
     { name:"Orb of Bleak", icon:"🧿",
       difficulty:3, cost:{Strength:1, Thought:1}, heal:6, adventure:-12,
       flavor:"Life is more precious than glory. Say the glorious.",
-        condition: () => {return adv.Adventure>=20;}},
+        condition: () => {return adv.Adventure>=15;}},
 
     { name:"Frostbite", icon:"❄️",
         difficulty:2, cost:{Toughness:2, Thinking:2}, heal:-2, adventure:6,
@@ -1442,6 +1443,10 @@ function generateChoices() {
     if(Math.random()<0.2 && adv.Adventure>5) pool = pool.slice(0,1);
     else if(Math.random()<0.4 && adv.Adventure>5) pool = pool.slice(0,2);
     else pool = pool.slice(0,3);
+    if (pool.length < 2 && adv.Backgrounds.includes("Pestered") && Math.random() < 0.8) {  // 80% chance
+        const pestered = encounters.find(e => e.name === "Pestered");
+        if (pestered) pool.push({ type: "enc", card: pestered });
+    }
     pool.forEach(entry => {
         encounteredCards.add(entry.card.name);
         const btn = document.createElement("button");
@@ -1490,22 +1495,23 @@ function playEncounter(c) {
     let stat = pickBestStat(c.stat, bonuses);
     const roll = d20();
 
-    let bonus = 0;
-    if (stat === "Strength") bonus = bonuses.strength || 0;
-    if (stat === "Thinking") bonus = bonuses.thinking || 0;
+    let bonus = 2; // this value here serves as DIFFICULTY ADJUSTMENT (it is added to player rolls)
+    if (stat === "Strength") bonus += bonuses.strength || 0;
+    if (stat === "Thinking") bonus += bonuses.thinking || 0;
 
     const total = roll==1? roll: (roll + adv[stat] + bonus);
+    console.log(roll);
 
     const difficulty = encounterIntensity(c.dc);
 
-    if (total > c.dc) {
+    if (total > c.dc+d20()-10) {
         adv.Adventure += difficulty;
         if (bonuses.heartyHeal && Math.random()<0.1)
             adv.hp = Math.min(adv.Toughness, adv.hp + 1);
 
         logEvent(
             c.icon,
-            `${c.name}: +${difficulty} 🏔️.`,
+            `${c.name}: Victory! +${difficulty} 🏔️.`,
             `Victory! +${difficulty} 🏔️`
         );
     } else {
@@ -1535,6 +1541,7 @@ function playTraining(c) {
     }
     adv[c.from] -= movement;
     adv[c.to]   += movement;
+    if(c.to=="Toughness") adv.hp += movement;
     logEvent(c.icon, `${c.name}: ${c.from} → ${c.to}.`, `${c.from} → ${c.to}`);
     setTimeout(() => endOfTurn(), 1200);
 }
