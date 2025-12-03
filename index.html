@@ -53,7 +53,7 @@
         opacity: 1;
         visibility: visible;
     }
-    #newgame, #asceticBtn {
+    #newgame {
         float: right;
         margin-left: 5px;
         padding: 6px 10px;
@@ -63,7 +63,7 @@
         cursor: pointer;
         color: #eee;
     }
-    #newgame:hover, #asceticBtn:hover {
+    #newgame:hover {
         background: #644;
     }
     #choices {
@@ -497,17 +497,6 @@
     </div>
 </div>
 
-<!-- Ascetic Path modal -->
-<div id="modal-ascetic" class="modal-backdrop">
-    <div class="modal">
-        <h2>Ascetic view?</h2>
-        <p style="text-align: left;">Gain: +5 🏔️ <br>But only see HP and score thereon.</p>
-        <button onclick="confirmAscetic()">Walk the path</button>
-        <button onclick="closeAsceticModal()">Cancel</button>
-    </div>
-</div>
-
-
 <script>
 let logLines = [];
 
@@ -739,26 +728,6 @@ function forceNewGame() {
 }
 
 // ----------------------------------------------------
-// Ascetic Path Modal
-// ----------------------------------------------------
-function openAsceticModal() {
-    if (adv.Adventure > 5) return; // disabled
-    document.getElementById("modal-ascetic").classList.add("show");
-}
-function closeAsceticModal() {
-    document.getElementById("modal-ascetic").classList.remove("show");
-}
-
-function confirmAscetic() {
-    statlessMode = true;
-    adv.Adventure += 5;
-    closeAsceticModal();
-    updateStats();
-    document.getElementById("asceticBtn").style.display = "none";
-    saveGame();
-}
-
-// ----------------------------------------------------
 // Random initial state
 // ----------------------------------------------------
 
@@ -830,7 +799,6 @@ function updateStats() {
                 🏔️ Adventure score: ${adv.Adventure}<br>&nbsp;
             </div>
         `;
-        document.getElementById("asceticBtn").style.display = "none";
         document.getElementById("adventureDisplay").style.display = "none";
         return;
     }
@@ -925,17 +893,6 @@ function updateStats() {
             </tr>
         </table>
         `;
-
-
-
-
-
-    // disable ascetic mode if adventure too high
-    if (adv.Adventure > 5) {
-        document.getElementById("asceticBtn").disabled = true;
-        document.getElementById("asceticBtn").style.opacity = "0.5";
-        document.getElementById("asceticBtn").style.cursor = "not-allowed";
-    }
 }
 
 // ----------------------------------------------------
@@ -1333,6 +1290,7 @@ function pickRandomAllowed(list) {
 
 function generateChoices() {
     if (adv.hp <= 0) return;
+    if (adv.Adventure <= 0) return;
     const choiceBox = document.getElementById("choices");
     choiceBox.innerHTML = "";
     let pool = [
