@@ -5,61 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>Mini Adventure</title>
 <style>
+
+    body {
+        font-family: sans-serif;
+        background: #222;
+        color: #eee;
+        padding: 20px;
+    }
     .star-icon {
         color: gold;
         width: 20px;
         height: 20px;
     }
-
-    @media (max-height: 768px) {
-        body {
-            transform: scale(0.9);
-            transform-origin: top center;
-        }
-    }
-
-    /* Even smaller phones */
-    @media (max-height: 768px) {
-        #topbar, #stats, #choices, #log {
-            transform: scale(0.9);
-            transform-origin: top center;
-        }
-    }
-
-    @media (max-height: 768px) {
-        #ledger-screen {
-            padding: 10px !important;
-            overflow-y: auto;
-        }
-
-        #ledger-container {
-            width: 100% !important;
-            padding-bottom: 0;
-        }
-
-        #ledger-list {
-            gap: 12px !important;
-            padding: 10px 10px !important;
-        }
-
-        .ledger-card {
-            width: 160px !important;
-            height: 220px !important;
-            padding: 10px !important;
-            font-size: 0.85em !important;
-        }
-
-        /* icon box fix */
-        .ledger-card div[style*="height:120px"] {
-            height: 90px !important;
-        }
-
-        /* flavor text shrinks properly */
-        .ledger-card div[style*="height:80px"] {
-            height: 60px !important;
-        }
-    }
-
 
     #floatingMessage {
         position: fixed;
@@ -85,11 +42,8 @@
     }
 
     #floatingOverlay {
-        position: fixed;
-        inset: 0;                /* replaces top/left/right/bottom = 0 */
         background: rgba(0,0,0,0.65);
         z-index: 9990;
-
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.35s ease, visibility 0.35s ease;
@@ -99,42 +53,32 @@
         opacity: 1;
         visibility: visible;
     }
-
-
-
-    body {
-        font-family: sans-serif;
-        background: #222;
-        color: #eee;
-        padding: 20px;
-    }
     #newgame, #asceticBtn {
         float: right;
         margin-left: 5px;
         padding: 6px 10px;
-        background: #333;
+        background: #533;
         border: 1px solid #555;
         border-radius: 6px;
         cursor: pointer;
         color: #eee;
     }
     #newgame:hover, #asceticBtn:hover {
-        background: #444;
+        background: #644;
     }
     #choices {
         display: flex;
-        gap: 20px;
         justify-content: center;
         overflow: visible;
     }
 
     .card-btn,.ledger-card  {
-        font-family: inherit !important;
+        font-family: sans-serif;
         display: block;
         position: relative;
         transition: opacity 0.4s ease, transform 0.4s ease;
         padding: 15px;
-        margin: 10px;
+        margin: 20px;
         border: 1px solid #555;
         color: black;
         background: #999;
@@ -147,6 +91,22 @@
         animation: cardEnter 0.35s ease-out;
         transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
+    @media (max-height: 768px) {
+        .card-btn,.ledger-card {
+            margin-left: 10px!important;
+            margin-right: 10px!important;
+            margin-top: 5px!important;
+        }
+        #choices {
+            transform: scale(0.85);
+            transform-origin: top center;
+        }
+        #ledger-container {
+            transform: scale(0.85);
+            transform-origin: top center; /* optional but makes scaling look nicer */
+        }
+    }
+
     .card-btn[data-stars="1"] {
         box-shadow: 0 0 8px 2px rgba(0,255,140,0.25);
     }
@@ -295,29 +255,22 @@
     .encounter-diff-3 { animation-name: pulseHard; }
     .encounter-diff-4 { animation-name: pulseDeadly; }
 
-    /* --- Click Effects: Fade Others --- */
     .card-fade-out {
         opacity: 0;
         transform: scale(0.8);
         transition: opacity 0.4s ease, transform 0.4s ease;
         pointer-events: none;
     }
-
-    /* --- Clicked Card: Zoom In --- */
     .card-zoom {
         position: relative;
         z-index: 999;
-        transform: scale(1.7);
+        transform: scale(1.2);
         transition: transform 0.45s ease, opacity 0.45s ease;
     }
-
-    /* --- Final fade after showing --- */
     .card-zoom-fade {
         opacity: 0;
         transition: opacity 0.4s ease;
     }
-
-    /* --- Effect text overlay --- */
     .card-effect-overlay {
         position: absolute;
         top: 50%;
@@ -331,58 +284,15 @@
         animation: overlayPop 0.8s ease forwards;
         pointer-events: none;
     }
-
     @keyframes overlayPop {
         0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
         30%  { opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
         60%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         100% { opacity: 0; transform: translate(-50%, -60%) scale(1); }
     }
-
-
-
-    /* Floating shimmer animation */
-    @keyframes sparkleFloat {
-        0%   { opacity: 0; transform: translateY(6px) scale(0.7); }
-        30%  { opacity: 1; transform: translateY(-4px) scale(1); }
-        100% { opacity: 0; transform: translateY(-12px) scale(0.7); }
-    }
-
-
-
     @keyframes pulse {
         from { transform: scale(1); }
         to   { transform: scale(1.30); }
-    }
-
-    .tooltip {
-        position: relative;
-        display: inline-block;
-        cursor: help;
-    }
-
-    .tooltip .tooltiptext {
-        visibility: hidden;
-        width: 180px;
-        background-color: #333;
-        color: #fff;
-        text-align: left;
-        border-radius: 6px;
-        padding: 8px;
-        font-size: 12px;
-        line-height: 1.25em;
-        position: absolute;
-        z-index: 99;
-        bottom: 125%;
-        left: 50%;
-        transform: translateX(-50%);
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
-
-    .tooltip:hover .tooltiptext {
-        visibility: visible;
-        opacity: 1;
     }
     #choices {
         margin-bottom: 20px;
@@ -545,8 +455,8 @@
 
 
 <div id="topbar">
-        <button id="newgame" onclick="returnToMenu()">Leave</button><br>
-        <button id="asceticBtn" onclick="openAsceticModal()">Ascetic (+5 🏔️)</button>
+        <button id="newgame" onclick="returnToMenu()">X</button><br>
+        <!--<button id="asceticBtn" onclick="openAsceticModal()">Ascetic (+5 🏔️)</button>-->
 </div>
 
 
@@ -661,6 +571,7 @@ function openCardSearch() {
 }
 function closeLedger() {
     document.getElementById("ledger-screen").style.display = "none";
+    document.getElementById("ledger-list").innerHTML = "";  // <-- FIX
     document.getElementById("main-menu").style.display = "flex";
 }
 
@@ -747,7 +658,10 @@ function loadGame() {
         adv.Backgrounds = data.Backgrounds || [];
         statlessMode = data.statlessMode || false;
         logLines = data.logLines || [];
-        encounteredCards = new Set(data.encounteredCards || []);
+        encounteredCards = new Set([
+            ...encounteredCards,
+            ...(data.encounteredCards || []),
+        ]);
         return true;
     } catch(e) {
         return false;
@@ -943,29 +857,29 @@ function updateStats() {
     const traitList = adv.Backgrounds || [];
     let strTraitIcons = "";
     let thinkTraitIcons = "";
-    if (traitList.includes("Muscled") && adv.hp>4) strTraitIcons += " + " + "💪".repeat(Math.floor(adv.hp / 4))+" Muscled <span style='color:#666'>boost from health</span>";
+    if (traitList.includes("Muscled") && adv.hp>4) strTraitIcons += " + " + "💪".repeat(Math.floor(adv.hp / 4))+" Muscled <span style='color:#666'>trait based on health</span>";
     if (traitList.includes("Collector")) {
         let rarityBoost = false;
         console.log(document.querySelectorAll(".card-btn"));
         document.querySelectorAll(".card-btn").forEach(btn => { if (Number(btn.dataset.stars) >=3 ) rarityBoost = true;});
-        if (rarityBoost) strTraitIcons += " + 💪💪 Collector <span style='color:#666'>boost from seeing a rare card</span>";
+        if (rarityBoost) strTraitIcons += " + 💪💪 Collector <span style='color:#666'>trait sees a rare card</span>";
     }
     if (traitList.includes("Lucky")) {
         let luckyActive = false;
         document.querySelectorAll(".card-btn.encounter-card").forEach(btn => {
             if (Number(btn.dataset.stars) >= adv.hp) luckyActive = true;
         });
-        if (luckyActive) strTraitIcons += " + 💪 Lucky <span style='color:#666'>boost from seeing a lethal threat</span>";
-        if (luckyActive) thinkTraitIcons += " + 🧠 Lucky <span style='color:#666'>boost from seeing a lethal threat</span>";
+        if (luckyActive) strTraitIcons += " + 💪 Lucky <span style='color:#666'>trait sees a lethal threat</span>";
+        if (luckyActive) thinkTraitIcons += " + 🧠 Lucky <span style='color:#666'>trait sees a lethal threat</span>";
     }
-    if (traitList.includes("Thrill-seeker") && adv.hp <= 1.5) strTraitIcons += " + 💪💪💪💪💪💪 Thrill-seeker <span style='color:#666'>boost one one HP</span>";
+    if (traitList.includes("Thrill-seeker") && adv.hp <= 1.5) strTraitIcons += " + 💪💪💪💪💪💪 Thrill-seeker <span style='color:#666'>trait at one HP</span>";
     if (traitList.includes("Scholar")) {
         const hasArtifact = document.querySelector(".card-btn.sparkling") !== null;
-        if (hasArtifact) thinkTraitIcons += " + 🧠🧠 Scholar <span style='color:#666'>boost from seeing an artifact</span>";
+        if (hasArtifact) thinkTraitIcons += " + 🧠🧠 Scholar <span style='color:#666'>trait sees an artifact</span>";
     }
     if (traitList.includes("All-rounder")) {
-        if (adv.Strong === 0) strTraitIcons += " + 💪💪 All-rounder <span style='color:#666'>boost to zero stats</span>";
-        if (adv.Clever === 0) thinkTraitIcons += " + 🧠🧠 All-rounder <span style='color:#666'>boost to zero stats</span>";
+        if (adv.Strong === 0) strTraitIcons += " + 💪💪 All-rounder <span style='color:#666'>trait at zero stats</span>";
+        if (adv.Clever === 0) thinkTraitIcons += " + 🧠🧠 All-rounder <span style='color:#666'>trait at zero stats</span>";
     }
 
     document.getElementById("stats").innerHTML = `
@@ -1140,7 +1054,7 @@ const encounters = [
       flavor:"An ogre smashes the ground as it charges." },
 
     { name:"Boar Charge", icon:"🐗", stat:"Strong", dc:15,
-      flavor:"Two tusks barrel toward you. Only thought: yummy if roasted." },
+      flavor:"Two tusks barrel forward. Only thought: yummy if roasted." },
 
 ];
 
@@ -1206,7 +1120,7 @@ const trainings = [
     { name:"Wizardry", icon:"🧙‍♂️", from:"Talent", to:"Clever",
         difficulty:3,
         flavor:"Say, fought a dragon recently? You have developed mana.",
-        condition: () => {return logTailIncludes("Dragon", 5);}},
+        condition: () => {return logTailIncludes("Dragon", 3);}},
 
     { name:"Clumsy God", icon:"🤕", from:"Trait", to:"Talent",
         difficulty:3,
@@ -1251,13 +1165,13 @@ const treasures = [
     { name:"Frostbite", icon:"❄️",
         difficulty:2, cost:{Tough:2, Clever:2}, heal:-2, adventure:6,
         flavor:"Sudden frost steals away warmth, thought, and resolve.",
-        condition: () => {return logTailIncludes("Obelisk", 5);}
+        condition: () => {return logTailIncludes("Obelisk", 1);}
     },
 
     { name:"Blightspore", icon:"🍄",
         difficulty:3, cost:{Tough:3}, heal:-3, adventure:9,
         flavor:"Your skin will sprout spores. A staple of rats and goblins.",
-        condition: () => {return logTailIncludes("Ratswarm", 5) || logTailIncludes("Goblin", 5) || logTailIncludes("Hex", 5);}
+        condition: () => {return logTailIncludes("Ratswarm", 2) || logTailIncludes("Goblin", 2) || logTailIncludes("Hex", 2);}
     },
 
     { name:"Dune Maw", icon:"🏜️",
@@ -1267,8 +1181,8 @@ const treasures = [
 
     { name:"Treasure", icon:"🏜️",
         difficulty:1, cost:{Strong:2}, heal:0, adventure:3,
-        flavor:"You discover shiny treasure in the encounter's remains.",
-        condition: () => {return logTailIncludes("Victory!", 1)&&(logTailIncludes("Bandit", 1) || logTailIncludes("Dragon", 3));}
+        flavor:"You discover shiny treasure in the last encounter's lair.",
+        condition: () => {return logTailIncludes("Victory!", 1)&&(logTailIncludes("Bandit", 1) || logTailIncludes("Dragon", 1));}
     }
 ];
 
@@ -1341,7 +1255,7 @@ function cardButtonHTML(entry) {
     const titleBox = (str,type) => `<div style="height:35px; font-size:1.4em;text-align:left;padding-left:5px"><b>${str}</b><div style="float:right">${type}</div></div>`;
     const infoBox  = html => `<div style="height:30px; display:flex; align-items:center; justify-content:center; flex-direction:column; padding-top:10px;">${html}</div>`;
     const flavorBox = txt => `<div style="height:30px; font-size:0.9em; opacity:0.7; display:flex; align-items:center; text-align:left;">${txt}</div>`;
-    const conditional = c.condition?'<div style="color:#640;height:30px"><b>Conditional find</b></div>':'<div style="height:30px"></div>';
+    const conditional = c.condition?`<div style="color:#640;height:30px"><b>${c.condition=="Pestered"?"From pestered trait":"Conditional find"}</b></div>`:'<div style="height:30px"></div>';
     // -------------------------
     // ENCOUNTER
     // -------------------------
@@ -1501,7 +1415,7 @@ function playEncounter(c) {
     let stat = pickBestStat(c.stat, bonuses);
     const roll = d20();
 
-    let bonus = 2; // this value here serves as DIFFICULTY ADJUSTMENT (it is added to player rolls)
+    let bonus = 3; // this value here serves as DIFFICULTY ADJUSTMENT (it is added to player rolls)
     if (stat === "Strong") bonus += bonuses.Strong || 0;
     if (stat === "Clever") bonus += bonuses.Clever || 0;
 
@@ -1696,7 +1610,7 @@ window.addEventListener("DOMContentLoaded", () => {
     overflow-y: auto;
     z-index: 99998;
 ">
-    <h1 style="margin-bottom: 10px;">Ledger</h1>
+    <!--<h1 style="margin-bottom: 10px;">Ledger</h1>-->
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <input id="ledger-search" placeholder="Search cards..." style="width: 90%; max-width: 400px; padding: 10px; margin: 0; border-radius: 6px; border: 1px solid #555; background: #222; color: #eee;" />
         <button onclick="closeLedger()" style="padding:10px 20px; border-radius:8px; margin-left: 10px; background:#333; color:#eee; border:1px solid #666;"> Back </button>
