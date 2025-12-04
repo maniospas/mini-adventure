@@ -666,7 +666,18 @@ function getTraitBonuses() {
         heartyHeal: false,
         luckyTriggered: false
     };
-    if (b.includes("Muscled")) bonuses.Strong += Math.floor(adv.hp / 4);
+    if (b.includes("Muscled"))
+        bonuses.Strong += Math.floor(adv.hp / 4);
+    if (b.includes("Wizard")) {
+        bonuses.Clever += 3;
+        if(adv.Strong>=2) bonuses.Strong -= 2;
+        else bonuses.Strong -= adv.Strong;
+    }
+    if (b.includes("Warrior")) {
+        bonuses.Strong += 3;
+        if(adv.Clever>=2) bonuses.Clever -= 2;
+        else bonuses.Clever -= adv.Clever;
+    }
     if (b.includes("Scholar")) {
         const hasArtifact = document.querySelector(".card-btn.sparkling") !== null;
         if (hasArtifact) bonuses.Clever += 2;
@@ -734,7 +745,7 @@ function forceNewGame() {
 const allTraits = [
     "Muscled", "Scholar", "Collector", "Glutton",
     "Lucky", "Armored", "Thrill-seeker", "All-rounder", 
-    "Pestered"
+    "Pestered", "Wizard", "Warrior"
 ];
 function createNewAdventurer() {
     const traits = [];
@@ -825,6 +836,14 @@ function updateStats() {
     const traitList = adv.Backgrounds || [];
     let strTraitIcons = "";
     let thinkTraitIcons = "";
+    if (traitList.includes("Wizard")) {
+        if(adv.Strong) strTraitIcons += "❌".repeat(Math.min(2, adv.Strong))+" Wizard <span style='color:#666'>trait weakens this</span>";
+    }
+    if (traitList.includes("Warrior")) {
+        if(adv.Clever) thinkTraitIcons += "❌".repeat(Math.min(2, adv.Clever))+" Warrior <span style='color:#666'>trait weakens this</span>";
+    }
+    if (traitList.includes("Wizard")) thinkTraitIcons += "+" + "🧠".repeat(3)+" Wizard <span style='color:#666'>trait</span>";
+    if (traitList.includes("Warrior")) strTraitIcons += " + " + "💪".repeat(3)+" Warrior <span style='color:#666'>trait</span>";
     if (traitList.includes("Muscled") && adv.hp>4) strTraitIcons += " + " + "💪".repeat(Math.floor(adv.hp / 4))+" Muscled <span style='color:#666'>trait based on health</span>";
     if (traitList.includes("Collector")) {
         let rarityBoost = false;
@@ -875,7 +894,7 @@ function updateStats() {
                     ${hunterHas && !StrongRelevant ? "" : ""}
                 </td>
                 <td>
-                    ${"💪".repeat(Math.max(0, Math.floor(adv.Strong)))}
+                    ${"💪".repeat(Math.max(0, Math.floor(adv.Strong-(traitList.includes("Wizard")?2:0))))}
                     ${strTraitIcons}
                 </td>
             </tr>
@@ -887,7 +906,7 @@ function updateStats() {
                     ${hunterHas && !CleverRelevant ? "" : ""}
                 </td>
                 <td>
-                    ${"🧠".repeat(Math.max(0, Math.floor(adv.Clever)))}
+                    ${"🧠".repeat(Math.max(0, Math.floor(adv.Clever-(traitList.includes("Warrior")?2:0))))}
                     ${thinkTraitIcons}
                 </td>
             </tr>
@@ -1074,7 +1093,7 @@ const trainings = [
         difficulty:2,
         flavor:"Where's my hat? No, that's the rabbit. IT ATE THE HAT!" },
 
-    { name:"Wizardry", icon:"🧙‍♂️", from:"Talent", to:"Clever",
+    { name:"Wizardry", icon:"🧙‍♂️", from:"Talent", to:"Wizard trait",
         difficulty:3,
         flavor:"Say, fought a dragon recently? You have developed mana.",
         condition: () => {return logTailIncludes("Dragon", 3);}},
@@ -1109,6 +1128,12 @@ const treasures = [
       difficulty:2, cost:{Clever:2, Strong:2}, heal:0, adventure:6,
       flavor:"Springs and gears mesmerize you." },
 
+    { name:"Mealtime", icon:"🏺",
+      difficulty:1, cost:{Strong:1}, heal:2, adventure:0,
+      flavor:"It's nice when there's game to cook.",
+      condition_priority: 20,
+      condition: () => {return logTailIncludes("Victory!", 1)&&logTailIncludes("Boar", 1);}},
+
     { name:"Deep Drink", icon:"🏺",
       difficulty:1, cost:{Clever:1}, heal:2, adventure:-4,
       flavor:"A sip restores vitality as if from endless waters.",
@@ -1122,7 +1147,7 @@ const treasures = [
     { name:"Frostbite", icon:"❄️",
         difficulty:2, cost:{Tough:2, Clever:2}, heal:-2, adventure:6,
         flavor:"Sudden frost steals away warmth, thought, and resolve.",
-        condition: () => {return logTailIncludes("Obelisk", 1);}
+        condition: () => {return logTailIncludes("Obelisk", 2);}
     },
 
     { name:"Blightspore", icon:"🍄",
@@ -1139,6 +1164,7 @@ const treasures = [
     { name:"Treasure", icon:"🏜️",
         difficulty:1, cost:{Strong:2}, heal:0, adventure:3,
         flavor:"You discover shiny treasure in the last encounter's lair.",
+        condition_priority: 20,
         condition: () => {return logTailIncludes("Victory!", 1)&&(logTailIncludes("Bandit", 1) || logTailIncludes("Dragon", 1));}
     }
 ];
@@ -1275,7 +1301,7 @@ function pickRandomAllowed(list) {
         if (c.dc !== undefined) stars = encounterIntensity(c.dc);
         if (c.difficulty !== undefined) stars = c.difficulty;
         let base = c.dc ? Math.min(1, adv.Strong / c.dc) : 1;
-        if (c.condition && !logTailIncludes(c.name, 20)) base *= 128;
+        if (c.condition && !logTailIncludes(c.name, 5)) base *= 128*(c.condition_priority?c.condition_priority:1);
         return base / Math.pow(2, Math.max(0, stars-adv.Adventure/10));
     });
     const total = weights.reduce((a, b) => a + b, 0);
@@ -1412,7 +1438,23 @@ function playTraining(c) {
     const movement = Math.floor(Math.pow(rand(), 5-c.difficulty) * 5) + 1;
     let from = c.from;
     let to = c.to;
-    if (from=="Trait") {
+    if (typeof from === "string" && from.endsWith(" trait")) {
+        const lost  = from.slice(0, -6);  // remove " trait"
+        if (adv.Backgrounds && adv.Backgrounds.length > 0) {
+            const idx = adv.Backgrounds.indexOf(lost);
+            if (idx !== -1) adv.Backgrounds.splice(idx, 1);
+            else {
+                logEvent(
+                    c.icon,
+                    `${c.name}: <span style="color:#f44">Too difficult today (you don't meet the criteria).</span>`,
+                    `<span style="color:#f44">You don't meet the criteria: -${c.difficulty} 🏔️</span>`
+                );
+                setTimeout(() => endOfTurn(), 1200);
+                return;
+            }
+        }
+    }
+    else if (from=="Trait") {
         if (!adv.Backgrounds || adv.Backgrounds.length === 0) {
             adv.Adventure -= c.difficulty;
             logEvent(
@@ -1434,8 +1476,23 @@ function playTraining(c) {
         return;
     }
     else adv[c.from] -= movement;
-
-    if (to == "Trait") {
+    if (typeof to === "string" && to.endsWith(" trait")) {
+        if (!adv.Backgrounds || adv.Backgrounds.length >= 3) {
+            adv.Adventure -= c.difficulty;
+            logEvent(
+                c.icon,
+                `${c.name}: <span style="color:#f44">Too difficult today (trait limit).</span>`,
+                `<span style="color:#f44">Too difficult: -${c.difficulty} 🏔️</span>`
+            );
+            setTimeout(() => endOfTurn(), 1200);
+            return;
+        }
+        const gained = to.slice(0, -6); // remove " trait" to get the background name
+        if (!adv.Backgrounds) adv.Backgrounds = [];
+        if (!adv.Backgrounds.includes(gained)) adv.Backgrounds.push(gained);
+        else console.warn(`Tried to add background "${gained}" but it's already present.`);
+    }
+    else if (to == "Trait") {
         if (!adv.Backgrounds || adv.Backgrounds.length >= 3) {
             adv.Adventure -= c.difficulty;
             logEvent(
