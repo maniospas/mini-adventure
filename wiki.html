@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Mini Adventure – Complete Wiki</title>
+<style>
+body {
+    background:#111;
+    color:#eee;
+    font-family:Arial, sans-serif;
+    padding:20px 40px;
+    line-height:1.6;
+}
+h1,h2,h3 {
+    color:#ffd479;
+}
+.section {
+    margin-bottom:40px;
+}
+.card {
+    background:#222;
+    border:1px solid #444;
+    padding:12px 18px;
+    margin:12px 0;
+    border-radius:8px;
+}
+.cond {
+    color:#f9d77a;
+    font-size:0.95em;
+}
+.flavor {
+    opacity:0.75;
+    font-style:italic;
+}
+.statblock {
+    font-size:0.95em;
+}
+</style>
+</head>
+<body>
+
+<h1>Mini Adventure – Wiki</h1>
+<p>This page documents every mechanic, stat, trait, and card, including conditional appearance rules and full effects.</p>
+
+<hr>
+
+<!-- ========================================================= -->
+<!-- 1. GAME OVERVIEW -->
+<!-- ========================================================= -->
+
+<div class="section">
+<h2>1. Game Overview</h2>
+<p><b>Mini Adventure</b> is a lightweight roguelite where you choose between Encounters, Trainings, and Treasures while managing:</p>
+<ul>
+    <li>❤️ <b>HP</b></li>
+    <li>💪 <b>Strong</b></li>
+    <li>🧠 <b>Clever</b></li>
+    <li>🛡 <b>Tough</b> (max HP)</li>
+    <li>🧿 <b>Talent</b> (a hidden resource: losing stats converts them to talent)</li>
+    <li>🏔 <b>Adventure score</b> (run progression)</li>
+</ul>
+
+<p>The run ends when:</p>
+<ul>
+    <li>❤️ HP reaches 0</li>
+    <li>🏔 Adventure score reaches 0</li>
+</ul>
+
+<p>The goal is to survive as long as possible while improving your adventurer.</p>
+</div>
+
+
+<hr>
+
+<!-- ========================================================= -->
+<!-- 2. CORE MECHANICS -->
+<!-- ========================================================= -->
+
+<div class="section">
+<h2>2. Core Mechanics</h2>
+
+<h3>Card Types</h3>
+<ul>
+    <li><b>Encounter</b> – Roll a d20 + stat vs DC. Win = 🏔️. Fail = ❤️ damage.</li>
+    <li><b>Training</b> – Convert one stat into another. May fail if not enough value.</li>
+    <li><b>Treasure</b> – Costs Strong/Clever/Tough; gives HP or Adventure; may reject you.</li>
+</ul>
+
+<h3>Star Difficulty</h3>
+<p>Stars influence rarity, damage, treasure rejection, and trait interactions.</p>
+
+<h4>Encounters</h4>
+<ul>
+    <li>1★ = DC ≤ 12</li>
+    <li>2★ = DC ≤ 15</li>
+    <li>3★ = DC ≤ 17</li>
+    <li>4★ = DC ≥ 18</li>
+</ul>
+
+<h4>Trainings & Treasures</h4>
+<p>Use their explicit <code>difficulty</code> (1–4).</p>
+</div>
+
+
+<hr>
+
+<!-- ========================================================= -->
+<!-- 3. STATS & TRAITS -->
+<!-- ========================================================= -->
+
+<div class="section">
+<h2>3. Stats & Traits</h2>
+
+<h3>Base Stats</h3>
+<ul>
+    <li><b>HP</b> – Health. Run ends at 0.</li>
+    <li><b>Tough</b> – Maximum HP and resource for some costs.</li>
+    <li><b>Strong</b> – Used in physical checks and treasure payments.</li>
+    <li><b>Clever</b> – Used in magical/mental checks and treasure payments.</li>
+    <li><b>Talent</b> – Grows when paying treasure costs.</li>
+</ul>
+
+<h3>Traits</h3>
+<p>Each adventurer begins with 2 random traits.</p>
+
+<ul>
+    <li><b>Muscled</b> – Gain bonus Strong equal to ⌊HP / 4⌋ in encounters.</li>
+    <li><b>Scholar</b> – +2 Clever when an <i>artifact</i> (sparkling card) appears.</li>
+    <li><b>Collector</b> – +2 Strong when a 3★+ card is visible.</li>
+    <li><b>Lucky</b> – +4 Strong & Clever when any encounter's stars ≥ your HP.</li>
+    <li><b>Armored</b> – Prevents 1 damage if damage >1.</li>
+    <li><b>Glutton</b> – 10% chance to heal 1 after a victory.</li>
+    <li><b>Thrill-seeker</b> – +6 Strong at ≤ 1 HP.</li>
+    <li><b>All-rounder</b> – +2 Strong if Strong = 0; +2 Clever if Clever = 0.</li>
+    <li><b>Pestered</b> – Adds the <i>Pestered</i> encounter to choice pool often.</li>
+</ul>
+</div>
+
+
+<hr>
+
+<!-- ========================================================= -->
+<!-- 4. ENCOUNTER CARDS -->
+<!-- ========================================================= -->
+
+<div class="section">
+<h2>4. Encounter Cards</h2>
+
+<p>Each encounter includes: <b>Stat used</b>, <b>DC</b>, <b>Stars</b>, <b>Flavor</b>, and <b>conditions</b>.</p>
+
+<!-- Helper macro format for encounters -->
+
+<h3>1★ Encounters</h3>
+
+<div class="card">
+<b>Ratswarm 🐀🐀</b><br>
+<span class="statblock">Stat: Strong / Clever — DC: 10</span><br>
+<div class="flavor">A wave of panicked rodents rushes over you.</div>
+</div>
+
+<div class="card">
+<b>Mystic Obelisk 🔮</b><br>
+<span class="statblock">Stat: Clever — DC: 10</span><br>
+<div class="flavor">It hums while freezing the air. Strength means nothing.</div>
+</div>
+
+
+<h3>2★ Encounters</h3>
+
+<div class="card"><b>Goblin Lurker 👺</b><br>
+<span class="statblock">Stat: Strong / Clever — DC: 11</span>
+<div class="flavor">A goblin watches with bright yellow eyes.</div></div>
+
+<div class="card"><b>Bandits 🪓</b><br>
+<span class="statblock">Stat: Strong / Clever — DC: 12</span>
+<div class="flavor">Their axes glint threateningly.</div></div>
+
+<div class="card"><b>Stoneback 🐢</b><br>
+<span class="statblock">Stat: Strong — DC: 13</span>
+<div class="flavor">A turtle the size of a cart blocks the way.</div></div>
+
+<div class="card"><b>Hex Tosser 🧨</b><br>
+<span class="statblock">Stat: Clever — DC: 14</span>
+<div class="flavor">The goblin hurls crackling hexes.</div></div>
+
+<div class="card"><b>Wildroot 🌿</b><br>
+<span class="statblock">Stat: Strong — DC: 14</span>
+<div class="flavor">A living plant grabs your ankle.</div></div>
+
+
+<h3>3★ Encounters</h3>
+
+<div class="card"><b>Thin Chasm 🪨</b><br>
+<span class="statblock">Stat: Strong — DC: 16</span>
+<div class="flavor">Rocks fall constantly from above.</div></div>
+
+<div class="card"><b>Pestered 🌀</b><br>
+<span class="statblock">Stat: Strong / Clever — DC: 15</span>
+<div class="cond">Condition: Only appears for players with the Pestered trait.</div>
+<div class="flavor">Your arch-nemesis shows up again.</div></div>
+
+<div class="card"><b>Trick Phantom 👻</b><br>
+<span class="statblock">Stat: Clever — DC: 12</span>
+<div class="flavor">A translucent figure twists reality.</div></div>
+
+<div class="card"><b>Boar Charge 🐗</b><br>
+<span class="statblock">Stat: Strong — DC: 15</span>
+<div class="flavor">Two tusks barrel forward.</div></div>
+
+
+<h3>4★ Encounters</h3>
+
+<div class="card"><b>Duelist ⚔️</b><br>
+<span class="statblock">Stat: Strong / Clever — DC: 17</span>
+<div class="flavor">A masked warrior challenges you in silence.</div></div>
+
+<div class="card"><b>Sentinel 🌳</b><br>
+<span class="statblock">Stat: Strong — DC: 19</span>
+<div class="cond">Condition: Appears if “Wildroot” was in the last 3 logs.</div>
+<div class="flavor">Roots twist violently in your path.</div></div>
+
+<div class="card"><b>Hulky 👹</b><br>
+<span class="statblock">Stat: Strong / Clever — DC: 19</span>
+<div class="flavor">An ogre smashes the ground while charging.</div></div>
+
+<div class="card"><b>May-maze 🌀</b><br>
+<span class="statblock">Stat: Clever — DC: 18</span>
+<div class="flavor">Illusory corridors whisper riddles.</div></div>
+
+<div class="card"><b>Stram 🐏</b><br>
+<span class="statblock">Stat: Clever — DC: 20</span>
+<div class="cond">Condition: Appears if “Hex” appeared in last 3 logs.</div>
+<div class="flavor">Cackling static fills the air.</div></div>
+
+<div class="card"><b>Dragon 🐉</b><br>
+<span class="statblock">Stat: Strong / Clever — DC: 22</span>
+<div class="flavor">Dreams of fire made real.</div></div>
+</div>
+
+
+<hr>
+
+<!-- ========================================================= -->
+<!-- 5. TRAINING CARDS -->
+<!-- ========================================================= -->
+
+<div class="section">
+<h2>5. Training Cards</h2>
+
+<p>Training converts one stat into another. May fail if insufficient points.</p>
+
+<h3>1★ Trainings</h3>
+
+<div class="card">
+<b>Powerlifting 🏋️</b><br>
+Clever → Strong<br>
+<div class="flavor">Muscles strain as you push past limits.</div>
+</div>
+
+<div class="card">
+<b>Meditate 🧘</b><br>
+Strong → Clever<br>
+<div class="flavor">Breath and calm reshape you.</div>
+</div>
+
+<div class="card">
+<b>Run Laps 🏃</b><br>
+Strong → Tough<br>
+<div class="cond">Condition: Tough ≤ 4, Strong ≥ 1, and you took damage last turn.</div>
+<div class="flavor">Relentless repetition strengthens your body.</div>
+</div>
+
+
+<h3>2★ Trainings</h3>
+
+<div class="card">
+<b>Martial Way 🥋</b><br>
+Tough → Strong<br>
+<div class="cond">Condition: Tough ≥ 4 and last turn was a Victory.</div>
+<div class="flavor">Training ends when it should, not when you're tired.</div>
+</div>
+
+<div class="card">
+<b>Powerdance 💃</b><br>
+Talent → Strong<br>
+<div class="cond">Condition: Clever ≥ 2 and last turn was Victory.</div>
+<div class="flavor">Rhythmic movement techniques build power.</div>
+</div>
+
+<div class="card">
+<b>Magiciano 🎩</b><br>
+Talent → Clever<br>
+<div class="flavor">Where’s my hat? That’s the rabbit. It ate the hat!</div>
+</div>
+
+
+<h3>3★ Trainings</h3>
+
+<div class="card">
+<b>Puzzle Course 🧩</b><br>
+Tough → Clever<br>
+<div class="flavor">Patterns unfold everywhere.</div>
+</div>
+
+<div class="card">
+<b>Reflection 📿</b><br>
+Talent → Clever<br>
+<div class="cond">Condition: “Clever” appeared in last 2 logs.</div>
+<div class="flavor">You realize you're quite clever after all.</div>
+</div>
+
+<div class="card">
+<b>Balance ⚖️</b><br>
+Clever → Strong<br>
+<div class="cond">Condition: Clever ≥ 5 and no Victory in last 3 logs.</div>
+<div class="flavor">Don’t look, feel!</div>
+</div>
+
+<div class="card">
+<b>Survivor 🥊</b><br>
+Talent → Tough<br>
+<div class="cond">Condition: HP < Tough − 2</div>
+<div class="flavor">Every bruise has made you tougher.</div>
+</div>
+
+<div class="card">
+<b>Grit Teeth 🦷</b><br>
+Talent → Strong<br>
+<div class="cond">Condition: At least 3 logs in last 3 lines contain “damage” or “Victory”.</div>
+<div class="flavor">There’s always one more push.</div>
+</div>
+
+<div class="card">
+<b>Wizardry 🧙‍♂️</b><br>
+Talent → Clever<br>
+<div class="cond">Condition: “Dragon” appeared in last 3 logs.</div>
+<div class="flavor">You feel mana developing in your veins.</div>
+</div>
+
+<div class="card">
+<b>Clumsy God 🤕</b><br>
+Trait → Talent<br>
+<div class="cond">Condition: You have traits and 3+ recent failures or damages.</div>
+<div class="flavor">Failing too much? Sorryyyyy...</div>
+</div>
+
+<div class="card">
+<b>Temptation 😈</b><br>
+Trait → Trait<br>
+<div class="cond">Condition: 2+ recent failures/damage logs.</div>
+<div class="flavor">Do you know who you are?</div>
+</div>
+</div>
+
+
+<hr>
+
+<!-- ========================================================= -->
+<!-- 6. TREASURE CARDS -->
+<!-- ========================================================= -->
+
+<div class="section">
+<h2>6. Treasure Cards</h2>
+
+<p>Treasures require paying stat costs. If rejected, you lose Adventure equal to difficulty.</p>
+
+<h3>Treasure List</h3>
+
+<div class="card">
+<b>Authority 👑</b><br>
+Cost: Clever 2<br>
+Effects: Heal 3, +3 Adventure<br>
+<div class="flavor">A faded memory of royalty stirs.</div>
+</div>
+
+<div class="card">
+<b>Titanbone Idol 🗿</b><br>
+Cost: Strong 2<br>
+Effects: Heal 3<br>
+</div>
+
+<div class="card">
+<b>Fire Feather 🔥</b><br>
+Cost: Tough 1<br>
+Effects: Heal 6<br>
+<div class="cond">Condition: HP < Tough − 3</div>
+</div>
+
+<div class="card">
+<b>Clockwork ⚙️</b><br>
+Cost: Clever 2, Strong 2<br>
+Effects: +6 Adventure<br>
+</div>
+
+<div class="card">
+<b>Deep Drink 🏺</b><br>
+Cost: Clever 1<br>
+Effects: Heal 2, −4 Adventure<br>
+<div class="cond">Condition: Adventure > 4 and HP < 3</div>
+</div>
+
+<div class="card">
+<b>Orb of Bleak 🧿</b><br>
+Cost: Strong 1, Clever 1<br>
+Effects: Heal 4, −4 Adventure<br>
+<div class="cond">Condition: Adventure > 5</div>
+</div>
+
+<div class="card">
+<b>Frostbite ❄️</b><br>
+Cost: Tough 2, Clever 2<br>
+Effects: Heal −2, +6 Adventure<br>
+<div class="cond">Condition: Last encounter included “Obelisk”.</div>
+</div>
+
+<div class="card">
+<b>Blightspore 🍄</b><br>
+Cost: Tough 3<br>
+Effects: Heal −3, +9 Adventure<br>
+<div class="cond">Condition: Recent Ratswarm, Goblin, or Hex-related logs.</div>
+</div>
+
+<div class="card">
+<b>Dune Maw 🏜️</b><br>
+Cost: Strong 4<br>
+Effects: Heal 4
+</div>
+
+<div class="card">
+<b>Treasure 🏜️</b><br>
+Cost: Strong 2<br>
+Effects: +3 Adventure<br>
+<div class="cond">Condition: Last encounter was a Victory and was either Bandits or Dragon.</div>
+</div>
+</div>
+
+<hr>
+
+<!-- ========================================================= -->
+<!-- 7. GLOSSARY -->
+<!-- ========================================================= -->
+
+<div class="section">
+<h2>7. Glossary</h2>
+
+<ul>
+    <li><b>Victory</b> – An encounter where your total roll beats the DC.</li>
+    <li><b>Damage</b> – HP lost when you fail an encounter.</li>
+    <li><b>Artifact</b> – Sparkling treasure card used in Scholar and Collector traits.</li>
+</ul>
+
+</div>
+
+</body>
+</html>

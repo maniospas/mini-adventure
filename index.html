@@ -1112,7 +1112,7 @@ const treasures = [
     { name:"Deep Drink", icon:"🏺",
       difficulty:1, cost:{Clever:1}, heal:2, adventure:-4,
       flavor:"A sip restores vitality as if from endless waters.",
-      condition: () => {return adv.Adventure>4;}},
+      condition: () => {return adv.Adventure>4 && adv.hp<3;}},
 
     { name:"Orb of Bleak", icon:"🧿",
       difficulty:3, cost:{Strong:1, Clever:1}, heal:4, adventure:-4,
@@ -1212,7 +1212,7 @@ function cardButtonHTML(entry) {
     const titleBox = (str,type) => `<div style="height:35px; font-size:1.4em;text-align:left;padding-left:5px"><b>${str}</b><div style="float:right">${type}</div></div>`;
     const infoBox  = html => `<div style="height:30px; display:flex; align-items:center; justify-content:center; flex-direction:column; padding-top:10px;">${html}</div>`;
     const flavorBox = txt => `<div style="height:30px; font-size:0.9em; opacity:0.7; display:flex; align-items:center; text-align:left;">${txt}</div>`;
-    const conditional = c.condition?`<div style="color:#640;height:30px"><b>${c.condition=="Pestered"?"From pestered trait":"Conditional find"}</b></div>`:'<div style="height:30px"></div>';
+    const conditional = c.condition?`<div style="color:#640;height:30px"><b>${c.name=="Pestered"?"From pestered trait":"Conditional find"}</b></div>`:'<div style="height:30px"></div>';
     // -------------------------
     // ENCOUNTER
     // -------------------------
