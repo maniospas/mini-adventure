@@ -575,45 +575,30 @@ function allCardsFlat() {
 function buildLedgerList() {
     const listEl = document.getElementById("ledger-list");
     listEl.innerHTML = "";
-
     const seen = encounteredCards;
     const search = document.getElementById("ledger-search").value.toLowerCase();
-
-    // Build full card pool EXACTLY like choices, but without randomizing
     const pool = [];
-
     encounters.forEach(c => pool.push({ type: "enc", card: c }));
     trainings.forEach(c => pool.push({ type: "train", card: c }));
     treasures.forEach(c => pool.push({ type: "treas", card: c }));
-
-    // Filter to only cards that player has encountered
     const filtered = pool.filter(entry => {
         if (!seen.has(entry.card.name)) return false;
 
         const hay = (entry.card.name + " " + (entry.card.flavor || "") + " " + (entry.card.stat || "")).toLowerCase();
         return hay.includes(search);
     });
-
     if (filtered.length === 0) {
         listEl.innerHTML = `<p style="opacity:0.7">No matching cards.</p>`;
         return;
     }
-
-    // Render each card using SAME system as gameplay
     filtered.forEach(entry => {
         const div = document.createElement("div");
         div.className = "ledger-card";
-        div.style.cursor = "default"; // no clicking
+        div.style.cursor = "default";
         div.innerHTML = cardButtonHTML(entry);
         div.onclick = null;
-
-        // apply stars purely for glow color
-        if (entry.type === "enc") {
-            div.dataset.stars = encounterIntensity(entry.card.dc);
-        } else {
-            div.dataset.stars = entry.card.difficulty;
-        }
-
+        if (entry.type === "enc") div.dataset.stars = encounterIntensity(entry.card.dc);
+        else div.dataset.stars = entry.card.difficulty;
         listEl.appendChild(div);
     });
 }
@@ -745,7 +730,7 @@ function forceNewGame() {
 const allTraits = [
     "Muscled", "Scholar", "Collector", "Glutton",
     "Lucky", "Armored", "Thrill-seeker", "All-rounder", 
-    "Pestered", "Wizard", "Warrior"
+    "Pestered", "Wizard"
 ];
 function createNewAdventurer() {
     const traits = [];
@@ -879,9 +864,6 @@ function updateStats() {
                 </td>
                 <td>
                     ${"❤️".repeat(adv.hp)}${"🩶".repeat(Math.max(0, adv.Tough - adv.hp))}
-                    ${traitList.includes("Glutton") 
-                        ? "+ Glutton <span style='color:#666'>regen after some encounters</span>" 
-                        : ""}
                     ${traitList.includes("Armored") 
                     ? "+ 🛡️ Armored <span style='color:#666'>reduces >1 damage</span>" 
                     : ""}
@@ -1011,7 +993,8 @@ const encounters = [
 
     { name:"Pestered", icon:"🌀", stat:"Strong/Clever", dc:15,
         flavor:"It would be too simple without the arch-nemesis showing up.",
-        condition: () => {return false;}},
+        condition: () => {return false;},
+        condition_description: "From pestered trait."},
 
     { name:"May-maze", icon:"🌀", stat:"Clever", dc:18,
       flavor:"Illusory corridors whisper riddles of how to leave." },
@@ -1074,10 +1057,10 @@ const trainings = [
         flavor:"A rhythmic sequence of steps; a movement technique.",
         condition: () => {return adv.Clever>=2 && logTailIncludes("Victory!", 1);}},
 
-    { name:"Balance", icon:"⚖️", from:"Clever", to:"Strong",
+    { name:"Balance", icon:"⚖️", from:"Clever", to:"Muscled trait",
         difficulty:3,
         flavor:"Don't look, feel! And, if you can't, think!",
-        condition: () => {return adv.Clever>=5 && !logTailIncludes("Victory!", 3);} },
+        condition: () => {return adv.Clever>=5 && !logTailIncludes("Victory!", 3) && adv.Backgrounds.length<=2;} },
 
     { name:"Survivor", icon:"🥊", from:"Talent", to:"Tough",
         difficulty:3,
@@ -1129,10 +1112,17 @@ const treasures = [
       flavor:"Springs and gears mesmerize you." },
 
     { name:"Mealtime", icon:"🏺",
-      difficulty:1, cost:{Strong:1}, heal:2, adventure:0,
-      flavor:"It's nice when there's game to cook.",
+      difficulty:0, cost:{}, heal:1, adventure:0,
+      flavor:"What you defeated looks yummy! Enjoy a meal.",
       condition_priority: 20,
       condition: () => {return logTailIncludes("Victory!", 1)&&logTailIncludes("Boar", 1);}},
+
+    { name:"Mealtime", icon:"🏺",
+      difficulty:0, cost:{}, heal:1, adventure:0,
+      flavor:"You found some ingredients! Enjoy a meal.",
+      condition_priority: 20,
+      condition: () => {return logTailIncludes("Victory!", 1)&&adv.Backgrounds.includes("Glutton");},
+      condition_description: "From glutton trait."},
 
     { name:"Deep Drink", icon:"🏺",
       difficulty:1, cost:{Clever:1}, heal:2, adventure:-4,
@@ -1145,13 +1135,13 @@ const treasures = [
         condition: () => {return adv.Adventure>5;}},
 
     { name:"Frostbite", icon:"❄️",
-        difficulty:2, cost:{Tough:2, Clever:2}, heal:-2, adventure:6,
+        difficulty:2, cost:{Clever:2}, heal:-2, adventure:6,
         flavor:"Sudden frost steals away warmth, thought, and resolve.",
         condition: () => {return logTailIncludes("Obelisk", 2);}
     },
 
     { name:"Blightspore", icon:"🍄",
-        difficulty:3, cost:{Tough:3}, heal:-3, adventure:9,
+        difficulty:3, cost:{}, heal:-3, adventure:9,
         flavor:"Your skin will sprout spores. A staple of rats and goblins.",
         condition: () => {return logTailIncludes("Ratswarm", 2) || logTailIncludes("Goblin", 2) || logTailIncludes("Hex", 2);}
     },
@@ -1162,7 +1152,7 @@ const treasures = [
     },
 
     { name:"Treasure", icon:"🏜️",
-        difficulty:1, cost:{Strong:2}, heal:0, adventure:3,
+        difficulty:0, cost:{}, heal:0, adventure:3,
         flavor:"You discover shiny treasure in the last encounter's lair.",
         condition_priority: 20,
         condition: () => {return logTailIncludes("Victory!", 1)&&(logTailIncludes("Bandit", 1) || logTailIncludes("Dragon", 1));}
@@ -1238,7 +1228,7 @@ function cardButtonHTML(entry) {
     const titleBox = (str,type) => `<div style="height:35px; font-size:1.4em;text-align:left;padding-left:5px"><b>${str}</b><div style="float:right">${type}</div></div>`;
     const infoBox  = html => `<div style="height:30px; display:flex; align-items:center; justify-content:center; flex-direction:column; padding-top:10px;">${html}</div>`;
     const flavorBox = txt => `<div style="height:30px; font-size:0.9em; opacity:0.7; display:flex; align-items:center; text-align:left;">${txt}</div>`;
-    const conditional = c.condition?`<div style="color:#640;height:30px"><b>${c.name=="Pestered"?"From pestered trait":"Conditional find"}</b></div>`:'<div style="height:30px"></div>';
+    const conditional = c.condition?`<div style="color:#640;height:30px"><b>${c.condition_description?c.condition_description:"Conditional find"}</b></div>`:'<div style="height:30px"></div>';
     // -------------------------
     // ENCOUNTER
     // -------------------------
@@ -1254,7 +1244,7 @@ function cardButtonHTML(entry) {
         `;
     }
     if (entry.type === "train") {
-        const info = `<div><b>${c.from} → ${c.to}</b></div>`;
+        const info = c.from?`<div><b>${c.from} → ${c.to}</b></div>`:`<div><b>Gain ${c.to}</b></div>`;
         return `
             ${titleBox(c.name, `${stars(c.difficulty)}`)}
             ${imageBox(c.icon, c.name, entry.type)}
@@ -1264,8 +1254,7 @@ function cardButtonHTML(entry) {
         `;
     }
     if (entry.type === "treas") {
-        const cost = Object.keys(c.cost).join(", ");
-        let effects = `${cost} → `;
+        let effects = c.cost && Object.keys(c.cost).length?`${Object.keys(c.cost).join(", ")} → `:"";
         if (c.heal !== 0) effects += ` ${c.heal} ❤️ `;
         if (c.adventure > 0) effects += ` ${c.adventure} 🏔️`;
         if (c.adventure < 0) effects += ` ${c.adventure} 🏔️`;
@@ -1407,7 +1396,7 @@ function playEncounter(c) {
 
     const difficulty = encounterIntensity(c.dc);
 
-    if (total > c.dc+d20()-10) {
+    if (total > (c.dc-10)/2+d20()) {
         adv.Adventure += difficulty;
         if (bonuses.heartyHeal && Math.random()<0.1)
             adv.hp = Math.min(adv.Tough, adv.hp + 1);
