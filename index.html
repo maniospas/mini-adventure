@@ -515,11 +515,22 @@ function preloadImages(files, callback) {
 
 // Show/hide continue button depending on save existence
 window.addEventListener("load", () => {
-    const hasSave = localStorage.getItem("tama_save");
-    if (!hasSave) {
+    const raw = localStorage.getItem("tama_save");
+    if (!raw) {
+        document.getElementById("continue-btn").style.display = "none";
+        return;
+    }
+    try {
+        const data = JSON.parse(raw);
+        if (!data.adv || data.adv.hp <= 0) {
+            document.getElementById("continue-btn").style.display = "none";
+        }
+    } catch (e) {
+        // Invalid save → hide continue
         document.getElementById("continue-btn").style.display = "none";
     }
 });
+
 
 /* --- MENU HANDLERS --- */
 
@@ -714,12 +725,12 @@ function closeNewGameModal() {
 }
 function confirmNewGame() {
     logLines = [];
-    localStorage.removeItem("tama_save");
+    saveGame();
     location.reload();
 }
 function forceNewGame() {
     logLines = [];
-    localStorage.removeItem("tama_save");
+    saveGame();
     location.reload();
 }
 
@@ -832,7 +843,6 @@ function updateStats() {
     if (traitList.includes("Muscled") && adv.hp>4) strTraitIcons += " + " + "💪".repeat(Math.floor(adv.hp / 4))+" Muscled <span style='color:#666'>trait based on health</span>";
     if (traitList.includes("Collector")) {
         let rarityBoost = false;
-        console.log(document.querySelectorAll(".card-btn"));
         document.querySelectorAll(".card-btn").forEach(btn => { if (Number(btn.dataset.stars) >=3 ) rarityBoost = true;});
         if (rarityBoost) strTraitIcons += " + 💪💪 Collector <span style='color:#666'>trait sees a rare card</span>";
     }
@@ -1115,13 +1125,13 @@ const treasures = [
       difficulty:0, cost:{}, heal:1, adventure:0,
       flavor:"What you defeated looks yummy! Enjoy a meal.",
       condition_priority: 20,
-      condition: () => {return logTailIncludes("Victory!", 1)&&logTailIncludes("Boar", 1);}},
+      condition: () => {return logTailIncludes("Victory!", 1)&&logTailIncludes("Boar", 1)&&adv.hp<adv.Tough;}},
 
     { name:"Mealtime", icon:"🏺",
       difficulty:0, cost:{}, heal:1, adventure:0,
       flavor:"You found some ingredients! Enjoy a meal.",
-      condition_priority: 20,
-      condition: () => {return logTailIncludes("Victory!", 1)&&adv.Backgrounds.includes("Glutton");},
+      condition_priority: 10,
+      condition: () => {return logTailIncludes("Victory!", 1)&&adv.Backgrounds.includes("Glutton")&&adv.hp<adv.Tough;},
       condition_description: "From glutton trait."},
 
     { name:"Deep Drink", icon:"🏺",
@@ -1130,9 +1140,9 @@ const treasures = [
       condition: () => {return adv.Adventure>4 && adv.hp<3;}},
 
     { name:"Orb of Bleak", icon:"🧿",
-      difficulty:3, cost:{Strong:1, Clever:1}, heal:4, adventure:-4,
+      difficulty:3, cost:{Strong:2}, heal:4, adventure:-4,
       flavor:"Life is more precious than glory. Say the glorious.",
-        condition: () => {return adv.Adventure>5;}},
+      condition: () => {return adv.Adventure>5 && !logTailIncludes("Victory", 3);}},
 
     { name:"Frostbite", icon:"❄️",
         difficulty:2, cost:{Clever:2}, heal:-2, adventure:6,
@@ -1156,6 +1166,13 @@ const treasures = [
         flavor:"You discover shiny treasure in the last encounter's lair.",
         condition_priority: 20,
         condition: () => {return logTailIncludes("Victory!", 1)&&(logTailIncludes("Bandit", 1) || logTailIncludes("Dragon", 1));}
+    },
+
+    { name:"World Fragment", icon:"🧿",
+        difficulty:0, cost:{}, heal:0, adventure:9,
+        flavor:"Sometimes found near the lair of old powers.",
+        condition_priority: 100,
+        condition: () => {return (logTailIncludes("Stram", 1) || logTailIncludes("Dragon", 1) || logTailIncludes("Sentinel", 1) || logTailIncludes("May-maze", 1));}
     }
 ];
 
@@ -1296,8 +1313,8 @@ function pickRandomAllowed(list) {
     const total = weights.reduce((a, b) => a + b, 0);
     let r = Math.random() * total;
     for (let i = 0; i < allowed.length; i++) {
-        if (r < weights[i]) return allowed[i];
         r -= weights[i];
+        if (r < 0) return allowed[i];
     }
     return allowed[allowed.length - 1]; //
 }
@@ -1318,17 +1335,30 @@ function generateChoices() {
         {type:"treas", card: pickRandomAllowed(treasures)},
     ];
 
+    // keep random
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+    shuffle(pool);
+
     // remove duplicates
     const seen = new Set();
+    let has_seen_conditional = false;
     pool = pool.filter(p => {
-        const key = p.type + "::" + p.card.name;
+        const key = p.card.name;
+        if (p.card.condition) {
+            if(has_seen_conditional) return false;
+            has_seen_conditional = true;
+        }
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
     });
 
-    // keep random
-    pool.sort(() => Math.random() - 0.5);
     if(Math.random()<0.2 && adv.Adventure>5) pool = pool.slice(0,1);
     else if(Math.random()<0.4 && adv.Adventure>5) pool = pool.slice(0,2);
     else pool = pool.slice(0,3);
