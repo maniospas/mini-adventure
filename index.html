@@ -20,18 +20,18 @@
 
     #floatingMessage {
         position: fixed;
-        top: 125px;
+        top: 140px;
         left: 300px;
-        background: rgba(40,40,40,1.00);
+        /* background: rgba(40,40,40,1.00); */
         border-radius: 12px;
-        border: 2px solid #666;
+        /* border: 2px solid #666; */
         padding: 20px 60px;
         color: #eee;
         font-size: 28px;
         text-align: center;
         z-index: 9999;
-        height: 268px;
-        min-width: 500px;
+        height: 250px;
+        min-width: 350px;
 
         opacity: 0;
         pointer-events: none;
@@ -98,6 +98,12 @@
             margin-left: 10px!important;
             margin-right: 10px!important;
             margin-top: 5px!important;
+        }
+        #floatingMessage { 
+            transform: scale(0.85);
+            transform-origin: top center;
+            left: 200px;
+            top: 125px;
         }
         #choices {
             transform: scale(0.85);
@@ -771,7 +777,6 @@ function createNewAdventurer() {
         const t = allTraits[Math.floor(Math.random() * allTraits.length)];
         if (!traits.includes(t)) traits.push(t);
     }
-    traits.push("Gambler");
 
     return {
         hp: 4 + Math.round(Math.random() * 2),
@@ -901,7 +906,7 @@ function updateStats() {
     }
     if (traitList.includes("Wizard")) thinkTraitIcons += "+" + "🧠".repeat(3)+" Wizard <span style='color:#666'>trait</span>";
     if (traitList.includes("Warrior")) strTraitIcons += " + " + "💪".repeat(3)+" Warrior <span style='color:#666'>trait</span>";
-    if (traitList.includes("Muscled") && adv.hp>4) strTraitIcons += " + " + "💪".repeat(Math.floor(adv.hp / 4))+" Muscled <span style='color:#666'>trait based on health</span>";
+    if (traitList.includes("Muscled") && adv.hp>4) strTraitIcons += " + " + "💪".repeat(Math.floor(adv.hp / 4))+" Muscled <span style='color:#666'>trait based on HP</span>";
     if (traitList.includes("Collector")) {
         let rarityBoost = false;
         document.querySelectorAll(".card-btn").forEach(btn => { if (Number(btn.dataset.stars) >=3 ) rarityBoost = true;});
@@ -1123,6 +1128,11 @@ const trainings = [
         condition: () => {return logTailIncludes("Clever", 2);}
     },
 
+    { name:"Strongman", icon:"💃", from:"Talent", to:"Strong",
+        difficulty:1,
+        flavor:"Your biceps want to join the conversation about talents!",
+        condition: () => {return logTailIncludes("Clever", 1) || logTailIncludes("Tough", 1) || logTailIncludes("Talent", 1);}},
+
     { name:"Powerdance", icon:"💃", from:"Talent", to:"Strong",
         difficulty:2,
         flavor:"Victory was thanks to a new movement technique!",
@@ -1225,7 +1235,7 @@ const treasures = [
     },
 
     { name:"Treasure", icon:"🏜️",
-        difficulty:0, cost:{}, heal:0, adventure:3,
+        difficulty:3, cost:{}, heal:0, adventure:0,
         flavor:"You discover shiny treasure in the last encounter's lair.",
         condition_priority: 20,
         condition: () => {return logTailIncludes("Victory!", 1)&&(logTailIncludes("Bandit", 1) || logTailIncludes("Dragon", 1));}
@@ -1235,7 +1245,7 @@ const treasures = [
         difficulty:1, cost:{}, heal:0, adventure:0,
         flavor:"You like extreme die rolls. Just had one!",
         condition_priority: 200,
-        condition: () => {return (logTailIncludes("roll 1", 1) || logTailIncludes("roll 20", 1)) && adv.Backgrounds.includes("Gambler");},
+        condition: () => {return (logTailIncludes("roll 1:", 1) || logTailIncludes("roll 20:", 1)) && adv.Backgrounds.includes("Gambler");},
         condition_description: "From gambler trait."},
 
     { name:"Primalt", icon:"🧿",
@@ -1353,10 +1363,10 @@ function cardButtonHTML(entry) {
         let rhs_effects = "";
         if (c.heal > 0) rhs_effects += '❤️'.repeat(c.heal);
         if (c.adventure > 0) rhs_effects += "&nbsp;"+stars(c.adventure, 18);
-        if (c.cost && Object.keys(c.cost).length) {
-            if(rhs_effects) rhs_effects += ", ";
-            rhs_effects += "Talent";
-        }
+        // if (c.cost && Object.keys(c.cost).length) {
+        //     if(rhs_effects) rhs_effects += ", ";
+        //     rhs_effects += "Talent";
+        // }
         if (effects || rhs_effects) {
             if (!effects) effects = "always";
             if (!rhs_effects) rhs_effects = "nothing";
@@ -1376,15 +1386,12 @@ function cardButtonHTML(entry) {
 function animateCardSelection(btn, effectText, callback) {
     const rect = btn.getBoundingClientRect();
 
-    // Freeze geometry exactly
-    btn.style.boxSizing = "border-box";
-    btn.style.position = "fixed";
-    btn.style.left = rect.left + "px";
-    btn.style.top = rect.top + "px";
-    btn.style.margin = "0";          // IMPORTANT
-    btn.style.transform = "none";    // reset hover/active transforms
+    // Freeze geometry
+    btn.style.transform = "translateX(0) scale(1)";
+    btn.style.willChange = "transform";
+    btn.style.zIndex = "9500";
 
-    // Force layout flush
+    // Force layout
     btn.offsetHeight;
 
     // Fade others
@@ -1392,19 +1399,27 @@ function animateCardSelection(btn, effectText, callback) {
         if (c !== btn) c.classList.add("card-fade-out");
     });
 
-    // Animate to absolute left
-    btn.style.left = "40px";
-    btn.style.transform = "scale(1.1)";
-    btn.style.zIndex = "9500";
-    btn.style.transition = "left 0.45s ease, transform 0.45s ease";
+    function getScaleX(el) {
+        const m = window.getComputedStyle(el).transform;
+        if (m === "none") return 1;
+        const values = m.match(/matrix\(([^)]+)\)/)[1].split(",");
+        return parseFloat(values[0]); // scaleX
+    }
 
-    // const overlay = document.createElement("div");
-    // overlay.className = "card-effect-overlay";
-    // overlay.innerHTML = effectText;
-    // btn.appendChild(overlay);
+    // Compute delta instead of absolute left
+    const scaleX = getScaleX(document.getElementById("choices"));
+    const visualLeft = rect.left;
+    const unscaledLeft = visualLeft / scaleX;
+
+    const targetX = 20; // viewport px
+    const deltaX = targetX - unscaledLeft + 20;
+
+    btn.style.transition = "transform 0.45s ease";
+    btn.style.transform = `translateX(${deltaX}px) scale(1)`;
 
     setTimeout(callback, 1000);
 }
+
 
 
 function pickRandomAllowed(list) {
@@ -1484,7 +1499,7 @@ function generateChoices() {
         btn.className = "card-btn";
         if (entry.type === "enc") {
             const diff = encounterIntensity(entry.card.dc);
-            btn.classList.add("encounter-card", "encounter-diff-" + diff);
+            btn.classList.add("encounter-card", "encounter-diff-" + (diff>4?4:diff));
         }
         btn.innerHTML = cardButtonHTML(entry);
         if (entry.type === "enc")   btn.onclick = () => {animateCardSelection(btn, "", () => playEncounter(entry.card));};
@@ -1559,17 +1574,17 @@ function playEncounter(c) {
         logEvent(
             c.icon,
             `${c.name} vs your roll ${roll}: Victory! +${difficulty} 🏔️.`,
-            `<div style="margin-top:6px;margin-bottom:14px;">Rolling for your win...</div><br><div style="margin-top:14px;margin-bottom:14px;align-items:center;justify-content:center;">${dresult(roll)}</div>${stat_value}<hr><div style="height:90px;align-items:center;justify-content:center;"><div style="font-size:42px;margin-top:94px;margin-bottom:34px">Victory!</div></div>`
+            `<div style="margin-bottom:14px;">Rolling for your win...</div><br><div style="margin-top:14px;margin-bottom:14px;align-items:center;justify-content:center;">${dresult(roll)}</div>${stat_value}<hr><div style="height:90px;align-items:center;justify-content:center;"><div style="font-size:42px;margin-top:94px;margin-bottom:34px">Victory!</div></div>`
         );
     } 
     else {
-        let dmg = is_critical_damage?difficulty:1 + Math.floor(difficulty * Math.random());
+        let dmg = is_critical_damage?difficulty:(1 + Math.floor(difficulty * Math.random()));
         if (bonuses.damageReduction && dmg > 1.5) dmg -= 1;
         adv.hp -= dmg;
         logEvent(
             c.icon,
             `${c.name} vs your roll ${roll}: <span style="color:#f44">${dmg} damage.</span>`,
-            `<div style="margin-top:6px;margin-bottom:14px;">Rolling for your win...</div><br><div style="margin-top:14px;margin-bottom:14px;align-items:center;justify-content:center;">${dresult(roll)}</div>${stat_value}<hr><div style="height:90px;color:#f44;align-items:center;justify-content:center;margin-top:94px;margin-bottom:34px;font-size:42px;">You took ${dmg} damage.</div>`
+            `<div style="margin-bottom:14px;">Rolling for your win...</div><br><div style="margin-top:14px;margin-bottom:14px;align-items:center;justify-content:center;">${dresult(roll)}</div>${stat_value}<hr><div style="height:90px;color:#f44;align-items:center;justify-content:center;margin-top:94px;margin-bottom:34px;font-size:42px;">Took ${dmg} damage.</div>`
         );
     }
 }
@@ -1671,44 +1686,43 @@ function playTraining(c) {
         if(to=="Tough") to = "🩶".repeat(movement);
         else if(to=="Strong") to = "💪".repeat(movement);
         else if(to=="Clever") to = "🧠".repeat(movement);
-        else to = `${to}`;
+        else if(to!="Talent") to = `${to}`;
         if(movement==0) to = "nothing";
+        to += "&nbsp;gained";
         if(movement<c.difficulty) 
-            to += `&nbsp;gained<br><hr><div style="color:#ddffdd; margin-top:102px;">There\'s talent leftover!</div>`;
-        else 
-            to += "&nbsp;gained";
+            to += '<br><div style="color:#ddffdd; margin-top:20px; text-align: left; margin-left: 100px;">There\'s talent leftover!</div>';
             //to += `&nbsp;gained<br><hr><div style="font-size:42px;margin-top:64px;margin-bottom:34px">Perfect!</div>${stars(c.difficulty, 36)}`;
         //if(to=="Tough") adv.hp += movement;
     }
-    logEvent(c.icon, `${c.name}: ${from} → ${to}.`, `<div style="margin-top:54px;"">${from}&nbsp;is consumed</div><br><div style="margin-top:34px;margin-bottom:34px;">&nbsp;</div>${to}`);
+    logEvent(c.icon, `${c.name}: ${from} → ${to}.`, `<div style="margin-top:2px;text-align:left;">${from}&nbsp;is consumed...</div><br><div style="margin-top:20px;text-align:left;margin-left:50px;">...${to}</div>`);
 }
 
 function playTreasure(c) {
-    const reject = Math.floor(Math.pow(rand(), c.difficulty) * 5) + 1;
+    const reject = Math.floor(Math.pow(rand(), Math.max(0,5-c.difficulty)) * 5) + 1;
     let power = 100;
     let offering = "";
     for (let stat in c.cost)
         if(adv[stat]<power) {
             power = adv[stat];
             if(offering) offering += "<br>";
-            if(stat=="Tough") offering += "🩶".repeat(reject)+" to be consumed";
-            else if(stat=="Strong") offering += "💪".repeat(reject)+" to be consumed";
-            else if(stat=="Clever") offering += "🧠".repeat(reject)+" to be consumed";
-            else offering += " "+stat+" to be consumed"; 
+            if(stat=="Tough") offering += "🩶".repeat(reject)+" demanded...";
+            else if(stat=="Strong") offering += "💪".repeat(reject)+" demanded...";
+            else if(stat=="Clever") offering += "🧠".repeat(reject)+" demanded...";
+            else offering += " "+stat+" demanded..."; 
         }
     if(c.heal<0) {
         if(offering) offering += "<br>";
-        offering += "❤️".repeat(-c.heal)+"&nbsp;forcefully consumed";
+        offering += "❤️".repeat(-c.heal)+"&nbsp;demanded...";
     }
     if(c.adventure<0) {
         if(offering) offering += "<br>";
-        offering += stars(-c.adventure, 32)+"&nbsp;forcefully consumed";
+        offering += stars(-c.adventure, 32)+"&nbsp;demanded...";
     }
     if (reject > power) {
         adv.Adventure -= c.difficulty;
         logEvent(c.icon, 
             `${c.name} - <span style="color:#f44">It rejects you.</span>`, 
-            `<div style="margin-top:64px;""></div>${offering}<hr><div style="height:90px;color:#f44;align-items:center;justify-content:center;margin-top:94px;margin-bottom:34px;font-size:42px;">Too difficult: lost&nbsp; ${stars(c.difficulty,36)}</div>`
+            `<div style="margin-top:2px;text-align:left;"></div>${offering}<hr><div style="height:90px;color:#f44;align-items:center;justify-content:center;margin-top:94px;margin-bottom:34px;font-size:42px;">Too difficult: lost&nbsp; ${stars(c.difficulty,36)}</div>`
         );
         return;
     }
@@ -1716,23 +1730,26 @@ function playTreasure(c) {
     for (let stat in c.cost) {
         adv[stat] -= c.cost[stat];
         adv.Talent += c.cost[stat];
-        if(!granted) granted += "<br>Talent gained";
     }
+
     adv.hp += c.heal;
     if(c.heal>0) {
-        granted += "<br>";
-        granted += "❤️".repeat(c.heal)+"&nbsp;gained";;
+        if(granted || offering) granted += "<br>";
+        granted += '<div style="text-align:left;margin-left:50px;">...';
+        granted += "❤️".repeat(c.heal)+"&nbsp;gained</div>";
     }
     if (adv.hp > adv.Tough) adv.hp = adv.Tough;
     if (c.adventure>0) {
-        granted += "<br>";
-        granted += stars(c.difficulty, 32)+"&nbsp;extra";
+        if(granted || offering) granted += "<br>";
+        granted += '<div style="text-align:left;margin-left:50px;">...';
+        granted += stars(c.adventure, 32)+"&nbsp;extra</div>";
     }
+    if(c.cost && Object.keys(c.cost).length) granted += '<br><div style="color:#ddffdd; margin-top:20px; text-align: left; margin-left: 100px;">There\'s talent leftover!</div>';
     adv.Adventure += c.adventure+c.difficulty;
     logEvent(c.icon, 
         `${c.name}: Accepted you.`, 
-        (offering?`<div style="margin-top:64px;""></div>${offering}<hr>`:'')
-        +`<div style="font-size:42px;margin-top:64px;margin-bottom:34px">Success!</div>${granted}</div>`
+        (offering?`<div style="margin-top:2px;text-align:left;">${offering}</div>`:'')
+        +`<div style="margin-top:20px;text-align:left;margin-left:50px;">&nbsp;</div>${granted}`
     );
 }
 
