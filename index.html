@@ -20,22 +20,23 @@
 
     #floatingMessage {
         position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translate(-50%, 0);
-        background: rgba(40,40,40,0.95);
-        padding: 20px 60px;
+        top: 125px;
+        left: 300px;
+        background: rgba(40,40,40,1.00);
         border-radius: 12px;
         border: 2px solid #666;
+        padding: 20px 60px;
         color: #eee;
         font-size: 28px;
         text-align: center;
         z-index: 9999;
+        height: 268px;
+        min-width: 500px;
 
         opacity: 0;
         pointer-events: none;
 
-        transition: opacity 0.35s ease;
+        transition: opacity 0.4s ease;
     }
     #floatingMessage.show {
         opacity: 1;
@@ -46,7 +47,7 @@
         z-index: 9990;
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.35s ease, visibility 0.35s ease;
+        transition: opacity 0.4s ease, visibility 0.4s ease;
     }
 
     #floatingOverlay.show {
@@ -71,6 +72,7 @@
         justify-content: center;
         overflow: visible;
     }
+
 
     .card-btn,.ledger-card  {
         font-family: sans-serif;
@@ -249,6 +251,30 @@
         100% { box-shadow: 0 0 0px rgba(255,0,0,0.2); }
     }
 
+    .floating-text {
+        opacity: 0;
+        transform: translateY(10px);
+        animation: floatIn 0.3s ease forwards;
+    }
+
+    @keyframes floatIn {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .floating-text.out {
+        animation: floatOut 0.2s ease forwards;
+    }
+
+    @keyframes floatOut {
+        to {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+    }
+
     /* classes applied dynamically */
     .encounter-diff-1 { animation-name: pulseEasy; }
     .encounter-diff-2 { animation-name: pulseMedium; }
@@ -258,7 +284,7 @@
     .card-fade-out {
         opacity: 0;
         transform: scale(0.8);
-        transition: opacity 0.4s ease, transform 0.4s ease;
+        transition: opacity 0.45s ease, transform 0.45s ease;
         pointer-events: none;
     }
     .card-zoom {
@@ -371,11 +397,7 @@
 
     #adventureDisplay {
         margin-right: 10px;
-        padding: 6px 10px;
-        background: #565;
-        border: 1px solid #555;
-        border-radius: 6px;
-        color: #eee;
+        color: #1f1f1f;
         text-align: center;
         float: left;
     }
@@ -698,13 +720,12 @@ function getTraitBonuses() {
         });
 
         if (lethal) {
-            bonuses.Strong += 4;
-            bonuses.Clever += 4;   // Added to match your display of 🧠 Lucky
+            bonuses.Strong += 2;
+            bonuses.Clever += 2;
             bonuses.luckyTriggered = true;
         }
     }
     if (b.includes("Armored")) bonuses.damageReduction = 1;
-    if (b.includes("Glutton")) bonuses.heartyHeal = true;
     if (b.includes("Thrill-seeker") && adv.hp <= 1.5) bonuses.Strong += 6;
     if (b.includes("All-rounder")) {
         if (adv.Strong === 0) bonuses.Strong += 2;
@@ -731,6 +752,7 @@ function confirmNewGame() {
 function forceNewGame() {
     logLines = [];
     saveGame();
+    document.getElementById("continue-btn").style.display = "none";
     location.reload();
 }
 
@@ -739,7 +761,7 @@ function forceNewGame() {
 // ----------------------------------------------------
 
 const allTraits = [
-    "Muscled", "Scholar", "Collector", "Glutton",
+    "Muscled", "Scholar", "Collector", "Glutton", "Gambler",
     "Lucky", "Armored", "Thrill-seeker", "All-rounder", 
     "Pestered", "Wizard"
 ];
@@ -749,6 +771,7 @@ function createNewAdventurer() {
         const t = allTraits[Math.floor(Math.random() * allTraits.length)];
         if (!traits.includes(t)) traits.push(t);
     }
+    traits.push("Gambler");
 
     return {
         hp: 4 + Math.round(Math.random() * 2),
@@ -760,20 +783,50 @@ function createNewAdventurer() {
         Backgrounds: traits
     };
 }
+
 function showFloatingMessage(html) {
+    const blocks = html.split("<hr>");
     const fm = document.getElementById("floatingMessage");
     const ov = document.getElementById("floatingOverlay");
 
-    fm.innerHTML = html;
+    let blockIndex = 0;
+    let lineIndex = 0;
+    let lines = [];
 
     fm.classList.add("show");
     ov.classList.add("show");
+    fm.innerHTML = "";
 
-    setTimeout(() => {
-        fm.classList.remove("show");
-        ov.classList.remove("show");
-    }, 1200);
+    function showNextLine() {
+        // Move to next block
+        if (lineIndex >= lines.length) {
+            blockIndex++;
+            if (blockIndex >= blocks.length) {
+                setTimeout(() => {
+                    fm.classList.remove("show");
+                    ov.classList.remove("show");
+                    document.querySelectorAll(".card-btn").forEach(c => {c.classList.add("card-fade-out");});
+                }, 0);
+                setTimeout(() => endOfTurn(), 400);
+                return;
+            }
+            lines = blocks[blockIndex].split("<br>");
+            lineIndex = 0;
+            fm.innerHTML = "";
+        }
+
+        const line = document.createElement("div");
+        if(lineIndex)
+            line.className = "floating-text";
+        line.innerHTML = lines[lineIndex++];
+        fm.appendChild(line);
+        setTimeout(showNextLine, 1100);
+    }
+
+    lines = blocks[0].split("<br>");
+    showNextLine();
 }
+
 
 
 let adv = createNewAdventurer();
@@ -803,7 +856,7 @@ function updateStats() {
         document.getElementById("stats").innerHTML = `
             <div class="stat-block">&nbsp;<br>
                 ${"❤️".repeat(adv.hp)}${"🩶".repeat(grey)}<br>
-                🏔️ Adventure score: ${adv.Adventure}<br>&nbsp;
+                ${adv.Adventure}${stars(1)}<br>&nbsp;
             </div>
         `;
         document.getElementById("adventureDisplay").style.display = "none";
@@ -811,7 +864,15 @@ function updateStats() {
     }
 
         document.getElementById("adventureDisplay").style.display = "inline";
-    document.getElementById("adventureDisplay").innerHTML = `<span>Adventure score</span><br><span style="font-size:36px">${adv.Adventure} 🏔️</span>`;
+    document.getElementById("adventureDisplay").innerHTML =
+        `<span style="position:relative;display:inline-block;font-size:62px;margin-left:30px;margin-right:30px;margin-top:4px;">
+            <span style="position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);opacity:0.8;z-index:0;">
+                ${stars(1,72)}
+            </span>
+            <span style="position:relative;z-index:1;font-size:42px;left:-4px;top:-10px;color:white;text-align:center;width:62px;">
+                ${adv.Adventure}
+            </span>
+        </span>`;
 
 
     // --- hunter check ---
@@ -851,8 +912,8 @@ function updateStats() {
         document.querySelectorAll(".card-btn.encounter-card").forEach(btn => {
             if (Number(btn.dataset.stars) >= adv.hp) luckyActive = true;
         });
-        if (luckyActive) strTraitIcons += " + 💪 Lucky <span style='color:#666'>trait sees a lethal threat</span>";
-        if (luckyActive) thinkTraitIcons += " + 🧠 Lucky <span style='color:#666'>trait sees a lethal threat</span>";
+        if (luckyActive) strTraitIcons += " + 💪💪 Lucky <span style='color:#666'>trait sees a lethal threat</span>";
+        if (luckyActive) thinkTraitIcons += " + 🧠🧠 Lucky <span style='color:#666'>trait sees a lethal threat</span>";
     }
     if (traitList.includes("Thrill-seeker") && adv.hp <= 1.5) strTraitIcons += " + 💪💪💪💪💪💪 Thrill-seeker <span style='color:#666'>trait at one HP</span>";
     if (traitList.includes("Scholar")) {
@@ -930,9 +991,9 @@ function d20() {
 }
 
 // ----------------------------------------------------
-function stars(n) {
+function stars(n, size=18) {
     const svg = `
-        <svg viewBox="0 0 24 24" width="18" height="18" 
+        <svg viewBox="0 0 24 24" width="${size}" height="${size}" 
              fill="#f7d343" stroke="#c8a200" stroke-width="1.2"
              style="vertical-align: -3px; margin-right: 0px; margin-left: -10px">
             <polygon points="12,2 15.2,9 22.5,9 16.7,13.8 
@@ -1039,8 +1100,8 @@ const trainings = [
 
     { name:"Run Laps", icon:"🏃", from:"Strong", to:"Tough",
       difficulty:1,
-      flavor:"Push your body through relentless repetition.",
-      condition: () => {return adv.Tough<=4 && adv.Strong>=1 && logTailIncludes("damage", 1);}},
+      flavor:"Push your body through relentless repetition."//,condition: () => {return adv.Tough<=4 && adv.Strong>=1 && logTailIncludes("damage", 1);}
+    },
 
     { name:"Martial Way", icon:"🥋", from:"Tough", to:"Strong",
       difficulty:2,
@@ -1064,12 +1125,12 @@ const trainings = [
 
     { name:"Powerdance", icon:"💃", from:"Talent", to:"Strong",
         difficulty:2,
-        flavor:"A rhythmic sequence of steps; a movement technique.",
+        flavor:"Victory was thanks to a new movement technique!",
         condition: () => {return adv.Clever>=2 && logTailIncludes("Victory!", 1);}},
 
     { name:"Balance", icon:"⚖️", from:"Clever", to:"Muscled trait",
         difficulty:3,
-        flavor:"Don't look, feel! And, if you can't, think!",
+        flavor:"THis is your problem: Don't think, feel!",
         condition: () => {return adv.Clever>=5 && !logTailIncludes("Victory!", 3) && adv.Backgrounds.length<=2;} },
 
     { name:"Survivor", icon:"🥊", from:"Talent", to:"Tough",
@@ -1105,7 +1166,7 @@ const trainings = [
 
 const treasures = [
     { name:"Authority", icon:"👑",
-      difficulty:2, cost:{Clever:2}, heal:3, adventure:3,
+      difficulty:3, cost:{Clever:2}, heal:3, adventure:0,
       flavor:"A faded memory of royalty stirs inside." },
 
     { name:"Titanbone Idol", icon:"🗿",
@@ -1113,12 +1174,12 @@ const treasures = [
       flavor:"Its echoing prayer aids the strong." },
 
     { name:"Fire Feather", icon:"🔥",
-      difficulty:1, cost:{Tough:1}, heal:6, adventure:0,
+      difficulty:1, cost:{Tough:1}, heal:4, adventure:0,
       flavor:"Magic echoes draws you to a source of warm healing.",
       condition: () => {return adv.hp<adv.Tough-3 && adv.Clever>=4;}},
 
     { name:"Clockwork", icon:"⚙️",
-      difficulty:2, cost:{Clever:2, Strong:2}, heal:0, adventure:6,
+      difficulty:4, cost:{Clever:2, Strong:2}, heal:0, adventure:0,
       flavor:"Springs and gears mesmerize you." },
 
     { name:"Mealtime", icon:"🏺",
@@ -1135,30 +1196,32 @@ const treasures = [
       condition_description: "From glutton trait."},
 
     { name:"Deep Drink", icon:"🏺",
-      difficulty:1, cost:{Clever:1}, heal:2, adventure:-4,
+      difficulty:0, cost:{Clever:1}, heal:2, adventure:-4,
       flavor:"A sip restores vitality as if from endless waters.",
       condition: () => {return adv.Adventure>4 && adv.hp<3;}},
 
     { name:"Orb of Bleak", icon:"🧿",
-      difficulty:3, cost:{Strong:2}, heal:4, adventure:-4,
+      difficulty:0, cost:{}, heal:4, adventure:-8,
       flavor:"Life is more precious than glory. Say the glorious.",
       condition: () => {return adv.Adventure>5 && !logTailIncludes("Victory", 3);}},
 
     { name:"Frostbite", icon:"❄️",
-        difficulty:2, cost:{Clever:2}, heal:-2, adventure:6,
+        difficulty:5, cost:{Clever:2}, heal:-2, adventure:0,
         flavor:"Sudden frost steals away warmth, thought, and resolve.",
+        condition_priority: 100,
         condition: () => {return logTailIncludes("Obelisk", 2);}
     },
 
-    { name:"Blightspore", icon:"🍄",
-        difficulty:3, cost:{}, heal:-3, adventure:9,
+    { name:"Shright", icon:"🍄",
+        difficulty:7, cost:{}, heal:-3, adventure:0,
         flavor:"Your skin will sprout spores. A staple of rats and goblins.",
+        condition_priority: 100,
         condition: () => {return logTailIncludes("Ratswarm", 2) || logTailIncludes("Goblin", 2) || logTailIncludes("Hex", 2);}
     },
 
-    { name:"Dune Maw", icon:"🏜️",
+    { name:"Desert Lily", icon:"🏜️",
         difficulty:1, cost:{Strong:4}, heal:4, adventure:0,
-        flavor:"Shifting sand drains stamina, protecting the desert lily."
+        flavor:"Shifting sand drains stamina, protecting."
     },
 
     { name:"Treasure", icon:"🏜️",
@@ -1168,8 +1231,15 @@ const treasures = [
         condition: () => {return logTailIncludes("Victory!", 1)&&(logTailIncludes("Bandit", 1) || logTailIncludes("Dragon", 1));}
     },
 
-    { name:"World Fragment", icon:"🧿",
-        difficulty:0, cost:{}, heal:0, adventure:9,
+    { name:"Gambler", icon:"🎲",
+        difficulty:1, cost:{}, heal:0, adventure:0,
+        flavor:"You like extreme die rolls. Just had one!",
+        condition_priority: 200,
+        condition: () => {return (logTailIncludes("roll 1", 1) || logTailIncludes("roll 20", 1)) && adv.Backgrounds.includes("Gambler");},
+        condition_description: "From gambler trait."},
+
+    { name:"Primalt", icon:"🧿",
+        difficulty:6, cost:{}, heal:0, adventure:0,
         flavor:"Sometimes found near the lair of old powers.",
         condition_priority: 100,
         condition: () => {return (logTailIncludes("Stram", 1) || logTailIncludes("Dragon", 1) || logTailIncludes("Sentinel", 1) || logTailIncludes("May-maze", 1));}
@@ -1245,7 +1315,7 @@ function cardButtonHTML(entry) {
     const titleBox = (str,type) => `<div style="height:35px; font-size:1.4em;text-align:left;padding-left:5px"><b>${str}</b><div style="float:right">${type}</div></div>`;
     const infoBox  = html => `<div style="height:30px; display:flex; align-items:center; justify-content:center; flex-direction:column; padding-top:10px;">${html}</div>`;
     const flavorBox = txt => `<div style="height:30px; font-size:0.9em; opacity:0.7; display:flex; align-items:center; text-align:left;">${txt}</div>`;
-    const conditional = c.condition?`<div style="color:#640;height:30px"><b>${c.condition_description?c.condition_description:"Conditional find"}</b></div>`:'<div style="height:30px"></div>';
+    const conditional = c.condition?`<div style="color:#640;height:30px"><b>${c.condition_description?c.condition_description:""}</b></div>`:'<div style="height:30px"></div>';
     // -------------------------
     // ENCOUNTER
     // -------------------------
@@ -1255,7 +1325,7 @@ function cardButtonHTML(entry) {
         return `
             ${titleBox(c.name, `${stars(i)}`)}
             ${imageBox(c.icon, c.name, entry.type)}
-            ${infoBox("<b>ENCOUNTER</b>")}
+            ${infoBox(`&nbsp;<br>${dresult('?', 50)}`)}
             ${conditional}
             ${flavorBox(c.flavor)}
         `;
@@ -1271,10 +1341,27 @@ function cardButtonHTML(entry) {
         `;
     }
     if (entry.type === "treas") {
-        let effects = c.cost && Object.keys(c.cost).length?`${Object.keys(c.cost).join(", ")} → `:"";
-        if (c.heal !== 0) effects += ` ${c.heal} ❤️ `;
-        if (c.adventure > 0) effects += ` ${c.adventure} 🏔️`;
-        if (c.adventure < 0) effects += ` ${c.adventure} 🏔️`;
+        let effects = c.cost && Object.keys(c.cost).length?`${Object.keys(c.cost).join(", ")}`:"";
+        if (c.adventure < 0) {
+            if(effects) effects += ", ";
+            effects += "&nbsp;"+stars(-c.adventure, 18);
+        }
+        if (c.heal < 0) {
+            if(effects) effects += ", ";
+            effects += '❤️'.repeat(-c.heal);
+        }
+        let rhs_effects = "";
+        if (c.heal > 0) rhs_effects += '❤️'.repeat(c.heal);
+        if (c.adventure > 0) rhs_effects += "&nbsp;"+stars(c.adventure, 18);
+        if (c.cost && Object.keys(c.cost).length) {
+            if(rhs_effects) rhs_effects += ", ";
+            rhs_effects += "Talent";
+        }
+        if (effects || rhs_effects) {
+            if (!effects) effects = "always";
+            if (!rhs_effects) rhs_effects = "nothing";
+            effects += " → "+rhs_effects;
+        }
         const info = `<div><b>${effects}</b></div>`;
         return `
             ${titleBox(c.name, `${stars(c.difficulty)}`)}
@@ -1287,17 +1374,38 @@ function cardButtonHTML(entry) {
 }
 
 function animateCardSelection(btn, effectText, callback) {
-    const all = document.querySelectorAll(".card-btn");
-    all.forEach(c => {
+    const rect = btn.getBoundingClientRect();
+
+    // Freeze geometry exactly
+    btn.style.boxSizing = "border-box";
+    btn.style.position = "fixed";
+    btn.style.left = rect.left + "px";
+    btn.style.top = rect.top + "px";
+    btn.style.margin = "0";          // IMPORTANT
+    btn.style.transform = "none";    // reset hover/active transforms
+
+    // Force layout flush
+    btn.offsetHeight;
+
+    // Fade others
+    document.querySelectorAll(".card-btn").forEach(c => {
         if (c !== btn) c.classList.add("card-fade-out");
     });
-    //btn.classList.add("card-zoom");
-    const overlay = document.createElement("div");
-    overlay.className = "card-effect-overlay";
-    overlay.innerHTML = effectText;
-    btn.appendChild(overlay);
-    setTimeout(() => {callback();}, 900);
+
+    // Animate to absolute left
+    btn.style.left = "40px";
+    btn.style.transform = "scale(1.1)";
+    btn.style.zIndex = "9500";
+    btn.style.transition = "left 0.45s ease, transform 0.45s ease";
+
+    // const overlay = document.createElement("div");
+    // overlay.className = "card-effect-overlay";
+    // overlay.innerHTML = effectText;
+    // btn.appendChild(overlay);
+
+    setTimeout(callback, 1000);
 }
+
 
 function pickRandomAllowed(list) {
     const allowed = list.filter(c =>!c.condition || c.condition(adv));
@@ -1412,51 +1520,65 @@ function pickBestStat(statString, bonuses) {
     return best;
 }
 
+function dresult(roll, height=120) {
+    return `<span style="position:relative;display:inline-block;"><img src="img/d20.png" style="height:${height}px;margin:10px;display:block;"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:bold;pointer-events:none;color:#1f1f1f;">${roll}</span></span>`;
+}
+
 function playEncounter(c) {
     const bonuses = getTraitBonuses();
 
     let stat = pickBestStat(c.stat, bonuses);
     const roll = d20();
 
-    let bonus = 3; // this value here serves as DIFFICULTY ADJUSTMENT (it is added to player rolls)
-    if (stat === "Strong") bonus += bonuses.Strong || 0;
-    if (stat === "Clever") bonus += bonuses.Clever || 0;
-
-    const total = roll==1? roll: (roll + adv[stat] + bonus);
+    let bonus = 0;
+    let stat_value = "<br>No stat bonus.";
+    if (stat === "Strong") {
+        bonus += bonuses.Strong || 0;
+        if(adv[stat]+bonus)
+            stat_value = "<br>+"+"💪".repeat(adv[stat]+bonus);
+    }
+    if (stat === "Clever") {
+        bonus += bonuses.Clever || 0;
+        if(adv[stat]+bonus)
+            stat_value = "<br>+"+"🧠".repeat(adv[stat]+bonus);
+    }
+    //bonus += 3; // this value here serves as DIFFICULTY ADJUSTMENT (it is added to player rolls)
+    const enemy_roll = 10;//d20(); 
+    const is_critical_damage = roll==1||enemy_roll==20;
+    const is_critical_gain = roll==20||enemy_roll==1;
+    const total = is_critical_damage? 1: (roll + adv[stat] + bonus);
+    if(is_critical_damage)
+        stat_value = '<br><span style="color:red;">Disastrous failure.</span>';
+    if(is_critical_gain)
+        stat_value = '<br><span style="color:#ddffdd;">Overwhelming success.</span>';
 
     const difficulty = encounterIntensity(c.dc);
 
-    if (total > (c.dc-10)/2+d20()) {
+    if (total > (c.dc-10)/2+enemy_roll || is_critical_gain) {
         adv.Adventure += difficulty;
-        if (bonuses.heartyHeal && Math.random()<0.1)
-            adv.hp = Math.min(adv.Tough, adv.hp + 1);
-
         logEvent(
             c.icon,
-            `${c.name}: Victory! +${difficulty} 🏔️.`,
-            `Victory! +${difficulty} 🏔️`
+            `${c.name} vs your roll ${roll}: Victory! +${difficulty} 🏔️.`,
+            `<div style="margin-top:6px;margin-bottom:14px;">Rolling for your win...</div><br><div style="margin-top:14px;margin-bottom:14px;align-items:center;justify-content:center;">${dresult(roll)}</div>${stat_value}<hr><div style="height:90px;align-items:center;justify-content:center;"><div style="font-size:42px;margin-top:94px;margin-bottom:34px">Victory!</div></div>`
         );
-    } else {
-        let dmg = 1 + Math.floor(difficulty * Math.random());
+    } 
+    else {
+        let dmg = is_critical_damage?difficulty:1 + Math.floor(difficulty * Math.random());
         if (bonuses.damageReduction && dmg > 1.5) dmg -= 1;
-
         adv.hp -= dmg;
-
         logEvent(
             c.icon,
-            `${c.name}: <span style="color:#f44">${dmg} damage.</span>`,
-            `<span style="color:#f44">You took ${dmg} damage.</span>`
+            `${c.name} vs your roll ${roll}: <span style="color:#f44">${dmg} damage.</span>`,
+            `<div style="margin-top:6px;margin-bottom:14px;">Rolling for your win...</div><br><div style="margin-top:14px;margin-bottom:14px;align-items:center;justify-content:center;">${dresult(roll)}</div>${stat_value}<hr><div style="height:90px;color:#f44;align-items:center;justify-content:center;margin-top:94px;margin-bottom:34px;font-size:42px;">You took ${dmg} damage.</div>`
         );
     }
-
-    setTimeout(() => endOfTurn(), 1200);
 }
 
 
 function playTraining(c) {
-    const movement = Math.floor(Math.pow(rand(), 5-c.difficulty) * 5) + 1;
     let from = c.from;
     let to = c.to;
+    const movement = c.from=="Talent"?c.difficulty:Math.round(rand()*Math.max(c.difficulty, 0));
     if (typeof from === "string" && from.endsWith(" trait")) {
         const lost  = from.slice(0, -6);  // remove " trait"
         if (adv.Backgrounds && adv.Backgrounds.length > 0) {
@@ -1466,9 +1588,8 @@ function playTraining(c) {
                 logEvent(
                     c.icon,
                     `${c.name}: <span style="color:#f44">Too difficult today (you don't meet the criteria).</span>`,
-                    `<span style="color:#f44">You don't meet the criteria: -${c.difficulty} 🏔️</span>`
+                    `<div style="height:90px;color:#f44;align-items:center;justify-content:center;margin-top:94px;margin-bottom:34px;font-size:42px;">Too difficult: lost&nbsp; ${stars(c.difficulty,36)}</div>`
                 );
-                setTimeout(() => endOfTurn(), 1200);
                 return;
             }
         }
@@ -1479,37 +1600,44 @@ function playTraining(c) {
             logEvent(
                 c.icon,
                 `${c.name}: <span style="color:#f44">Too difficult today (no traits left).</span>`,
-                `<span style="color:#f44">No traits left: -${c.difficulty} 🏔️</span>`
+                `<div style="height:90px;color:#f44;align-items:center;justify-content:center;margin-top:94px;margin-bottom:34px;font-size:42px;">Too difficult: lost&nbsp; ${stars(c.difficulty,36)}</div>`
             );
-            setTimeout(() => endOfTurn(), 1200);
             return;
         }
         const idx = Math.floor(Math.random() * adv.Backgrounds.length);
         const lost = adv.Backgrounds.splice(idx, 1)[0];
         from = lost+" trait";
     }
-    else if (adv[c.from] <= movement) {
+    else if (adv[c.from] <= c.difficulty) {
         adv.Adventure -= c.difficulty;
-        logEvent(c.icon, `${c.name}: <span style="color:#f44">Too difficult today.</span>`, `<span style="color:#f44">Too difficult: -${c.difficulty} 🏔️</span>`);
-        setTimeout(() => endOfTurn(), 1200);
+        logEvent(c.icon, 
+            `${c.name}: <span style="color:#f44">Too difficult today.</span>`, 
+            `<div style="height:90px;color:#f44;align-items:center;justify-content:center;margin-top:94px;margin-bottom:34px;font-size:42px;">Too difficult: lost&nbsp; ${stars(c.difficulty,36)}</div>`
+        );
         return;
     }
-    else adv[c.from] -= movement;
+    else {
+        if(from=="Tough") from = "🩶".repeat(c.difficulty);
+        else if(from=="Strong") from = "💪".repeat(c.difficulty);
+        else if(from=="Clever") from = "🧠".repeat(c.difficulty);
+        else from = `${from}`;
+        adv[c.from] -= c.difficulty;
+    }
     if (typeof to === "string" && to.endsWith(" trait")) {
         if (!adv.Backgrounds || adv.Backgrounds.length >= 3) {
             adv.Adventure -= c.difficulty;
             logEvent(
                 c.icon,
                 `${c.name}: <span style="color:#f44">Too difficult today (trait limit).</span>`,
-                `<span style="color:#f44">Too difficult: -${c.difficulty} 🏔️</span>`
+                `<div style="height:90px;color:#f44;align-items:center;justify-content:center;margin-top:94px;margin-bottom:34px;font-size:42px;">Too difficult: lost&nbsp; ${stars(c.difficulty,36)}</div>`
             );
-            setTimeout(() => endOfTurn(), 1200);
             return;
         }
         const gained = to.slice(0, -6); // remove " trait" to get the background name
         if (!adv.Backgrounds) adv.Backgrounds = [];
         if (!adv.Backgrounds.includes(gained)) adv.Backgrounds.push(gained);
-        else console.warn(`Tried to add background "${gained}" but it's already present.`);
+        else console.warn(`Tried to add background "${gained}" because it's already present.`);
+        to += " gained";
     }
     else if (to == "Trait") {
         if (!adv.Backgrounds || adv.Backgrounds.length >= 3) {
@@ -1517,9 +1645,8 @@ function playTraining(c) {
             logEvent(
                 c.icon,
                 `${c.name}: <span style="color:#f44">Too difficult today (trait limit).</span>`,
-                `<span style="color:#f44">Too difficult: -${c.difficulty} 🏔️</span>`
+                `<div style="height:90px;color:#f44;align-items:center;justify-content:center;margin-top:94px;margin-bottom:34px;font-size:42px;">Too difficult: lost&nbsp; ${stars(c.difficulty,36)}</div>`
             );
-            setTimeout(() => endOfTurn(), 1200);
             return;
         }
         const available = allTraits.filter(t => !adv.Backgrounds.includes(t));
@@ -1528,44 +1655,85 @@ function playTraining(c) {
             logEvent(
                 c.icon,
                 `${c.name}: <span style="color:#f44">Too difficult today (no traits left).</span>`,
-                `<span style="color:#f44">Too difficult: -${c.difficulty} 🏔️</span>`
+                `<div style="height:90px;color:#f44;align-items:center;justify-content:center;margin-top:94px;margin-bottom:34px;font-size:42px;">Too difficult: lost&nbsp; ${stars(c.difficulty,36)}</div>`
             );
-            setTimeout(() => endOfTurn(), 1200);
             return;
         }
         const newTrait = available[Math.floor(Math.random() * available.length)];
         adv.Backgrounds.push(newTrait);
-        to = newTrait+" trait";
+        to = newTrait+" trait gained";
     }
     else {
         adv[to] += movement;
-        if(to=="Tough") adv.hp += movement;
+        adv.Talent += c.difficulty-movement;
+        //if(movement==c.difficulty)
+        adv.Adventure += c.difficulty;
+        if(to=="Tough") to = "🩶".repeat(movement);
+        else if(to=="Strong") to = "💪".repeat(movement);
+        else if(to=="Clever") to = "🧠".repeat(movement);
+        else to = `${to}`;
+        if(movement==0) to = "nothing";
+        if(movement<c.difficulty) 
+            to += `&nbsp;gained<br><hr><div style="color:#ddffdd; margin-top:102px;">There\'s talent leftover!</div>`;
+        else 
+            to += "&nbsp;gained";
+            //to += `&nbsp;gained<br><hr><div style="font-size:42px;margin-top:64px;margin-bottom:34px">Perfect!</div>${stars(c.difficulty, 36)}`;
+        //if(to=="Tough") adv.hp += movement;
     }
-    logEvent(c.icon, `${c.name}: ${from} → ${to}.`, `${from} → ${to}`);
-    setTimeout(() => endOfTurn(), 1200);
+    logEvent(c.icon, `${c.name}: ${from} → ${to}.`, `<div style="margin-top:54px;"">${from}&nbsp;is consumed</div><br><div style="margin-top:34px;margin-bottom:34px;">&nbsp;</div>${to}`);
 }
 
 function playTreasure(c) {
     const reject = Math.floor(Math.pow(rand(), c.difficulty) * 5) + 1;
     let power = 100;
+    let offering = "";
     for (let stat in c.cost)
-        if(adv[stat]<power)
+        if(adv[stat]<power) {
             power = adv[stat];
-    if (reject >= power) {
+            if(offering) offering += "<br>";
+            if(stat=="Tough") offering += "🩶".repeat(reject)+" to be consumed";
+            else if(stat=="Strong") offering += "💪".repeat(reject)+" to be consumed";
+            else if(stat=="Clever") offering += "🧠".repeat(reject)+" to be consumed";
+            else offering += " "+stat+" to be consumed"; 
+        }
+    if(c.heal<0) {
+        if(offering) offering += "<br>";
+        offering += "❤️".repeat(-c.heal)+"&nbsp;forcefully consumed";
+    }
+    if(c.adventure<0) {
+        if(offering) offering += "<br>";
+        offering += stars(-c.adventure, 32)+"&nbsp;forcefully consumed";
+    }
+    if (reject > power) {
         adv.Adventure -= c.difficulty;
-        logEvent(c.icon, `${c.name} - <span style="color:#f44">It rejects you.</span>`, `<span style="color:#f44">It rejects you: -${c.difficulty} 🏔️</span>`);
-        setTimeout(() => endOfTurn(), 1200);
+        logEvent(c.icon, 
+            `${c.name} - <span style="color:#f44">It rejects you.</span>`, 
+            `<div style="margin-top:64px;""></div>${offering}<hr><div style="height:90px;color:#f44;align-items:center;justify-content:center;margin-top:94px;margin-bottom:34px;font-size:42px;">Too difficult: lost&nbsp; ${stars(c.difficulty,36)}</div>`
+        );
         return;
     }
+    let granted = "";
     for (let stat in c.cost) {
         adv[stat] -= c.cost[stat];
         adv.Talent += c.cost[stat];
+        if(!granted) granted += "<br>Talent gained";
     }
     adv.hp += c.heal;
+    if(c.heal>0) {
+        granted += "<br>";
+        granted += "❤️".repeat(c.heal)+"&nbsp;gained";;
+    }
     if (adv.hp > adv.Tough) adv.hp = adv.Tough;
-    adv.Adventure += c.adventure;
-    logEvent(c.icon, `${c.name}: Accepted you.`, `<span>It accepts you.</span>`);
-    setTimeout(() => endOfTurn(), 1200);
+    if (c.adventure>0) {
+        granted += "<br>";
+        granted += stars(c.difficulty, 32)+"&nbsp;extra";
+    }
+    adv.Adventure += c.adventure+c.difficulty;
+    logEvent(c.icon, 
+        `${c.name}: Accepted you.`, 
+        (offering?`<div style="margin-top:64px;""></div>${offering}<hr>`:'')
+        +`<div style="font-size:42px;margin-top:64px;margin-bottom:34px">Success!</div>${granted}</div>`
+    );
 }
 
 function getBestScore() {
@@ -1583,7 +1751,7 @@ function endOfTurn() {
         updateStats();
         const score = adv.Adventure;
         setBestScore(score);
-        document.getElementById("death-score").innerText = `Score: ${score} 🏔️\nBest: ${getBestScore()} 🏔️`;
+        document.getElementById("death-score").innerHTML = `Score: ${score}&nbsp;${stars(1)}<br>Best: ${getBestScore()}&nbsp;${stars(1)}`;
         document.getElementById("modal-death").classList.add("show");
         return;
     }
@@ -1592,7 +1760,7 @@ function endOfTurn() {
         updateStats();
         const score = 0;
         setBestScore(score);
-        document.getElementById("death-score-adv").innerHTML = `Adventure score is zero...<br>This is not fun anymore!`;
+        document.getElementById("death-score-adv").innerHTML = `Your score is zero...<br>This is not fun anymore!`;
         document.getElementById("modal-death-adv").classList.add("show");
         return;
     }
