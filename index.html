@@ -770,7 +770,7 @@ const traitDescriptions = {
     Armored: "reduces >1 damage by 1",
     Thrilled: "💪💪💪💪💪💪 on 1 HP",
     Rounded: "boosts zero stats by 3",
-    Pestered: "adds a&nbsp;&nbsp;"+stars(2)+" encounter if there is only one other option",
+    Pestered: "often adds a&nbsp;&nbsp;"+stars(2)+" encounter if one other option",
     Wizard: "🧠🧠🧠 but invalidates the first two 💪💪",
 
 
@@ -1032,11 +1032,6 @@ function logEvent(icon, msg, short_msg) {
     logLines.push(full);
     if (logLines.length > 200) logLines.shift();
     showFloatingMessage(short_msg);
-}
-
-// ----------------------------------------------------
-function rand() {
-    return Math.random();
 }
 
 // ----------------------------------------------------
@@ -1704,7 +1699,7 @@ function playEncounter(c) {
 function playTraining(c) {
     let from = c.from;
     let to = c.to;
-    const movement = c.from=="Talent"?c.difficulty:Math.round(rand()*Math.max(c.difficulty, 0));
+    let movement = c.from=="Talent"?c.difficulty:Math.round(Math.random()*Math.max(c.difficulty, 0));
     if (typeof from === "string" && from.endsWith(" trait")) {
         const lost  = from.slice(0, -6);  // remove " trait"
         if (adv.Backgrounds && adv.Backgrounds.length > 0) {
@@ -1734,7 +1729,7 @@ function playTraining(c) {
         const lost = adv.Backgrounds.splice(idx, 1)[0];
         from = lost+" trait";
     }
-    else if (adv[c.from] <= c.difficulty) {
+    else if (adv[c.from] < c.difficulty) {
         adv.Adventure -= c.difficulty;
         logEvent(c.icon, 
             `${c.name}: <span style="color:#f44">Too difficult today.</span>`, 
@@ -1790,6 +1785,7 @@ function playTraining(c) {
         to = newTrait+" trait gained";
     }
     else {
+        if(movement==0 && c.difficulty && adv.Talent>=3) movement = 1;
         adv[to] += movement;
         adv.Talent += c.difficulty-movement;
         //if(movement==c.difficulty)
@@ -1798,8 +1794,8 @@ function playTraining(c) {
         else if(to=="Strong") to = "💪".repeat(movement);
         else if(to=="Clever") to = "🧠".repeat(movement);
         else if(to!="Talent") to = `${to}`;
-        if(movement==0) to = "nothing";
-        to += "&nbsp;gained";
+        if(movement==0) to = "nothing gained (low talent difficulties)";
+        else to += "&nbsp;gained";
         if(movement<c.difficulty) 
             to += '<br><div style="color:#ddffdd; margin-top:20px; text-align: left; margin-left: 100px;">There\'s talent leftover!</div>';
             //to += `&nbsp;gained<br><hr><div style="font-size:42px;margin-top:64px;margin-bottom:34px">Perfect!</div>${stars(c.difficulty, 36)}`;
@@ -1809,7 +1805,7 @@ function playTraining(c) {
 }
 
 function playTreasure(c) {
-    const reject = Math.floor(Math.pow(rand(), Math.max(0,5-c.difficulty)) * 5) + 1;
+    const reject = Math.floor(Math.random()*c.difficulty) + 1;
     let power = 100;
     let offering = "";
     for (let stat in c.cost)
