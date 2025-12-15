@@ -357,7 +357,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 50;
+        z-index: 100000;
     }
     .modal-backdrop.show {
         opacity: 1;
@@ -474,7 +474,7 @@
 <div id="main-menu">
     <h1 style="font-size:42px; margin-bottom:20px;">Mini Adventure</h1>
 
-    <button class="menu-btn" onclick="startNewGameFromMenu()">New</button>
+    <button class="menu-btn" onclick="openNewGamePreview()">New</button>
     <button class="menu-btn" id="continue-btn" onclick="continueGame()">Continue</button>
     <button class="menu-btn" onclick="openCardSearch()">Ledger</button>
 
@@ -541,23 +541,28 @@ function preloadImages(files, callback) {
     });
 }
 
-// Show/hide continue button depending on save existence
+// Show/hide continue button depending on save
 window.addEventListener("load", () => {
+    const btn = document.getElementById("continue-btn");
     const raw = localStorage.getItem("tama_save");
+
     if (!raw) {
-        document.getElementById("continue-btn").style.display = "none";
+        btn.style.display = "none";
         return;
     }
+
     try {
         const data = JSON.parse(raw);
-        if (!data.adv || data.adv.hp <= 0) {
-            document.getElementById("continue-btn").style.display = "none";
+        const adv = data.adv;
+
+        if (!adv || adv.hp <= 0 || adv.Adventure <= 0) {
+            btn.style.display = "none";
         }
     } catch (e) {
-        // Invalid save → hide continue
-        document.getElementById("continue-btn").style.display = "none";
+        btn.style.display = "none";
     }
 });
+
 
 
 /* --- MENU HANDLERS --- */
@@ -703,8 +708,8 @@ function getTraitBonuses() {
         else bonuses.Clever -= adv.Clever;
     }
     if (b.includes("Scholar")) {
-        const hasArtifact = document.querySelector(".card-btn.sparkling") !== null;
-        if (hasArtifact) bonuses.Clever += 2;
+        const hasTreasure = document.querySelector(".card-btn[data-type='treas']") !== null;
+        if (hasTreasure) bonuses.Clever += 2;
     }
     if (b.includes("Collector")) {
         const cards = document.querySelectorAll(".card-btn");
@@ -715,27 +720,11 @@ function getTraitBonuses() {
         });
         if (found) bonuses.Strong += 2;
     }
-    if (b.includes("Lucky")) {
-        const cards = document.querySelectorAll(".card-btn.encounter-card");
-        let lethal = false;
-
-        cards.forEach(btn => {
-            const stars = Number(btn.dataset.stars);
-            // New condition: threat if stars >= your current HP
-            if (stars >= adv.hp) lethal = true;
-        });
-
-        if (lethal) {
-            bonuses.Strong += 2;
-            bonuses.Clever += 2;
-            bonuses.luckyTriggered = true;
-        }
-    }
     if (b.includes("Armored")) bonuses.damageReduction = 1;
-    if (b.includes("Thrill-seeker") && adv.hp <= 1.5) bonuses.Strong += 6;
-    if (b.includes("All-rounder")) {
-        if (adv.Strong === 0) bonuses.Strong += 2;
-        if (adv.Clever === 0) bonuses.Clever += 2;
+    if (b.includes("Thrilled") && adv.hp <= 1.5) bonuses.Strong += 6;
+    if (b.includes("Rounded")) {
+        if (adv.Strong === 0) bonuses.Strong += 3;
+        if (adv.Clever === 0) bonuses.Clever += 3;
     }
     return bonuses;
 }
@@ -768,17 +757,31 @@ function forceNewGame() {
 
 const allTraits = [
     "Muscled", "Scholar", "Collector", "Glutton", "Gambler",
-    "Lucky", "Armored", "Thrill-seeker", "All-rounder", 
+    "Lucky", "Armored", "Thrilled", "Rounded", 
     "Pestered", "Wizard"
 ];
+const traitDescriptions = {
+    Muscled: "extra strong based on HP",
+    Scholar: "🧠🧠 when seeing an artifact",
+    Collector: "💪💪 when seeing something rare",
+    Glutton: "chance of Mealtime after victories",
+    Gambler: "chance of gaining&nbsp;&nbsp;"+stars(2)+" after rolling 1 or 20",
+    Lucky: "disastrous failure rolls become a success",
+    Armored: "reduces >1 damage by 1",
+    Thrilled: "💪💪💪💪💪💪 on 1 HP",
+    Rounded: "boosts zero stats by 3",
+    Pestered: "adds a&nbsp;&nbsp;"+stars(2)+" encounter if there is only one other option",
+    Wizard: "🧠🧠🧠 but invalidates the first two 💪💪",
+
+
+}
 function createNewAdventurer() {
     const traits = [];
-    while (traits.length < 2) {
+    while (traits.length < 1) { // only have one trait at the beginning
         const t = allTraits[Math.floor(Math.random() * allTraits.length)];
         if (!traits.includes(t)) traits.push(t);
     }
-
-    return {
+    ret = {
         hp: 4 + Math.round(Math.random() * 2),
         Strong: Math.round(Math.random() * 5),
         Tough: 0,
@@ -787,6 +790,8 @@ function createNewAdventurer() {
         Adventure: 1,
         Backgrounds: traits
     };
+    ret.Tough = ret.hp;
+    return ret;
 }
 
 function showFloatingMessage(html) {
@@ -835,14 +840,66 @@ function showFloatingMessage(html) {
 
 
 let adv = createNewAdventurer();
-adv.Tough = adv.hp;
+let previewAdv = null;
+function renderPreview() {
+    const a = previewAdv;
+    const traits = a.Backgrounds.map(name=>'<br>&nbsp;<b>'+name+'</b><br>&nbsp;<span style="opacity:0.7">'+traitDescriptions[name]+'</span>').join("<br>");
+
+    document.getElementById("preview-content").innerHTML = `
+        <table class="stat-table" style="margin-bottom:20px">
+            <tr><td>Tough&nbsp;&nbsp</td><td>${"❤️".repeat(a.hp)}</td></tr>
+            <tr><td>Strong</td><td> ${"💪".repeat(a.Strong)}</td></tr>
+            <tr><td>Clever</td><td> ${"🧠".repeat(a.Clever)}</td></tr>
+            <tr><td>Talent</td><td> ${a.Talent<8?'<span style="opacity:0.7">unknown</span>':'<span style="color:#ddffdd;">exceptional</span>'}<span style="opacity:0.7"> - this potential is never shown</span></span></td></tr>
+        </table>
+        ${traits}
+        `;
+        // 🩶❤️
+        //HP "❤️".repeat(adv.hp)
+}
+
+function openNewGamePreview() {
+    previewAdv = createNewAdventurer();
+    previewAdv.Tough = previewAdv.hp;
+    const hasContinue = document.getElementById("continue-btn").style.display !== "none";
+    //document.getElementById("preview-warning").style.display =hasContinue ? "block" : "none";
+    renderPreview();
+    document.getElementById("modal-preview").classList.add("show");
+}
+
+
+function rerollPreview() {
+    previewAdv = createNewAdventurer();
+    previewAdv.Tough = previewAdv.hp;
+    renderPreview();
+}
+
+function closePreview() {
+    previewAdv = null;
+    document.getElementById("modal-preview").classList.remove("show");
+}
+
+function confirmPreview() {
+    // Only here do we actually apply the roll
+    adv = JSON.parse(JSON.stringify(previewAdv));
+    statlessMode = false;
+    logLines = [];
+    encounteredCards = new Set();
+
+    saveGame();
+    closePreview();
+    hideMainMenu();
+    document.body.classList.remove("game-hidden");
+    generateChoices();
+    updateStats();
+}
+
 
 // NEW FLAG
 let statlessMode = false;
 
 if (!loadGame()) {
     adv = createNewAdventurer();
-    adv.Tough = adv.hp;
     statlessMode = false;
 }
 
@@ -912,22 +969,14 @@ function updateStats() {
         document.querySelectorAll(".card-btn").forEach(btn => { if (Number(btn.dataset.stars) >=3 ) rarityBoost = true;});
         if (rarityBoost) strTraitIcons += " + 💪💪 Collector <span style='color:#666'>trait sees a rare card</span>";
     }
-    if (traitList.includes("Lucky")) {
-        let luckyActive = false;
-        document.querySelectorAll(".card-btn.encounter-card").forEach(btn => {
-            if (Number(btn.dataset.stars) >= adv.hp) luckyActive = true;
-        });
-        if (luckyActive) strTraitIcons += " + 💪💪 Lucky <span style='color:#666'>trait sees a lethal threat</span>";
-        if (luckyActive) thinkTraitIcons += " + 🧠🧠 Lucky <span style='color:#666'>trait sees a lethal threat</span>";
-    }
-    if (traitList.includes("Thrill-seeker") && adv.hp <= 1.5) strTraitIcons += " + 💪💪💪💪💪💪 Thrill-seeker <span style='color:#666'>trait at one HP</span>";
+    if (traitList.includes("Thrilled") && adv.hp <= 1.5) strTraitIcons += " + 💪💪💪💪💪💪 Thrilled <span style='color:#666'>trait at one HP</span>";
     if (traitList.includes("Scholar")) {
-        const hasArtifact = document.querySelector(".card-btn.sparkling") !== null;
-        if (hasArtifact) thinkTraitIcons += " + 🧠🧠 Scholar <span style='color:#666'>trait sees an artifact</span>";
+        const hasTreasure = document.querySelector(".card-btn[data-type='treas']") !== null;
+        if (hasTreasure) thinkTraitIcons += " + 🧠🧠 Scholar <span style='color:#666'>trait sees an artifact</span>";
     }
-    if (traitList.includes("All-rounder")) {
-        if (adv.Strong === 0) strTraitIcons += " + 💪💪 All-rounder <span style='color:#666'>trait at zero stats</span>";
-        if (adv.Clever === 0) thinkTraitIcons += " + 🧠🧠 All-rounder <span style='color:#666'>trait at zero stats</span>";
+    if (traitList.includes("Rounded")) {
+        if (adv.Strong === 0) strTraitIcons += " + 💪💪💪 Rounded <span style='color:#666'>trait at zero stats</span>";
+        if (adv.Clever === 0) thinkTraitIcons += " + 🧠🧠🧠 Rounded <span style='color:#666'>trait at zero stats</span>";
     }
 
     document.getElementById("stats").innerHTML = `
@@ -1320,7 +1369,7 @@ const treasures = [
 
     { 
         name:"Gambler", icon:"🎲",
-        difficulty:1, cost:{}, heal:0, adventure:0,
+        difficulty:2, cost:{}, heal:0, adventure:0,
         flavor:"You like extreme die rolls. Just had one!",
         condition_priority: 200,
         condition: () => {return (logTailIncludes("roll 1:", 1) || logTailIncludes("roll 20:", 1)) && adv.Backgrounds.includes("Gambler");},
@@ -1565,6 +1614,7 @@ function generateChoices() {
         if (entry.type === "treas") btn.onclick = () => {animateCardSelection(btn, "", () => playTreasure(entry.card));};
         btn.dataset.stars = (entry.type === "enc")?encounterIntensity(entry.card.dc):(entry.type === "train")? entry.card.difficulty:entry.card.difficulty;
         //if (entry.type === "treas") btn.classList.add("sparkling");
+        btn.dataset.type = entry.type;
         choiceBox.appendChild(btn);
     });
 }
@@ -1601,7 +1651,7 @@ function playEncounter(c) {
     const bonuses = getTraitBonuses();
 
     let stat = pickBestStat(c.stat, bonuses);
-    const roll = d20();
+    let roll = d20();
 
     let bonus = 0;
     let stat_value = "<br>No stat bonus.";
@@ -1614,7 +1664,8 @@ function playEncounter(c) {
         if(adv[stat]+bonus>0) stat_value = "<br>+"+"🧠".repeat(adv[stat]+bonus);
     }
     //bonus += 3; // this value here serves as DIFFICULTY ADJUSTMENT (it is added to player rolls)
-    const enemy_roll = 10;//d20(); 
+    let enemy_roll = 10;//d20(); 
+    //roll = 1;
     const is_critical_damage = roll==1||enemy_roll==20;
     const is_critical_gain = roll==20||enemy_roll==1;
     const total = is_critical_damage? 1: (roll + adv[stat] + bonus);
@@ -1622,6 +1673,10 @@ function playEncounter(c) {
         stat_value = '<br><span style="color:red;">Disastrous failure.</span>';
     if(is_critical_gain)
         stat_value = '<br><span style="color:#ddffdd;">Overwhelming success.</span>';
+    if(is_critical_damage && adv.Backgrounds.includes("Lucky")) {
+        stat_value = '<br><span style="color:#ddffdd;">Lucky trait success.</span>';
+        enemy_roll = -100;
+    }
 
     const difficulty = encounterIntensity(c.dc);
 
@@ -1775,7 +1830,7 @@ function playTreasure(c) {
     }
     if(c.adventure<0) {
         if(offering) offering += "<br>";
-        offering += '<div style="text-align:left;margin-left:0px;">';
+        offering += '<div style="text-align:left;margin-left:0px;">&nbsp;';
         offering += stars(-c.adventure, 32)+"&nbsp;demanded...</div>";
     }
     if (reject > power) {
@@ -1895,26 +1950,30 @@ window.addEventListener("DOMContentLoaded", () => {
         <button onclick="closeLedger()" style="padding:10px 20px; border-radius:8px; margin-left: 10px; background:#333; color:#eee; border:1px solid #666;"> Back </button>
     </div>
 
-    <div id="ledger-container"
-        style="
-            width: 90%;
-            margin: 0 auto;
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding-bottom: 10px;
-        ">
-        <div id="ledger-list"
-            style="
-                display: flex;
-                flex-direction: row;
-                gap: 20px;
-                padding: 10px 5px;
-                width: max-content;
-                color: black;
-            ">
+    <div id="ledger-container" style="width: 90%;margin: 0 auto;overflow-x: auto;overflow-y: hidden; padding-bottom: 10px;">
+        <div id="ledger-list" style="display: flex;flex-direction: row;gap: 20px;padding: 10px 5px;width: max-content;color: black;"></div>
+    </div>
+</div>
+
+<!-- New Game Preview modal -->
+<div id="modal-preview" class="modal-backdrop">
+    <div class="modal" style="width:420px;text-align:left;">
+        <div id="preview-content" style="margin-top:10px; line-height:1.6;"></div>
+
+
+        <div id="preview-warning" style="color:#f44; font-weight:bold; display:none; margin-bottom:10px;margin-top:20px;">
+            You are in the middle of another adventure!!
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:20px;">
+            <button onclick="rerollPreview()">Reroll</button>
+            <div>
+                <button onclick="closePreview()">X</button>
+                <button onclick="confirmPreview()">Start</button>
+            </div>
         </div>
     </div>
 </div>
+
 
 
 </body>
