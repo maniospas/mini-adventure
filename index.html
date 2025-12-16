@@ -696,7 +696,7 @@ function getTraitBonuses() {
         luckyTriggered: false
     };
     if (b.includes("Muscled"))
-        bonuses.Strong += Math.floor(adv.hp / 4);
+        bonuses.Strong += Math.floor(adv.hp / 3);
     if (b.includes("Wizard")) {
         bonuses.Clever += 3;
         if(adv.Strong>=2) bonuses.Strong -= 2;
@@ -963,7 +963,7 @@ function updateStats() {
     }
     if (traitList.includes("Wizard")) thinkTraitIcons += "+" + "🧠".repeat(3)+" Wizard <span style='color:#666'>trait</span>";
     if (traitList.includes("Warrior")) strTraitIcons += " + " + "💪".repeat(3)+" Warrior <span style='color:#666'>trait</span>";
-    if (traitList.includes("Muscled") && adv.hp>4) strTraitIcons += " + " + "💪".repeat(Math.floor(adv.hp / 4))+" Muscled <span style='color:#666'>trait based on HP</span>";
+    if (traitList.includes("Muscled") && adv.hp>4) strTraitIcons += " + " + "💪".repeat(Math.floor(adv.hp / 3))+" Muscled <span style='color:#666'>trait based on HP</span>";
     if (traitList.includes("Collector")) {
         let rarityBoost = false;
         document.querySelectorAll(".card-btn").forEach(btn => { if (Number(btn.dataset.stars) >=3 ) rarityBoost = true;});
@@ -1056,7 +1056,8 @@ function encounterIntensity(dc) {
     if (dc <= 12) return 1;
     if (dc <= 15) return 2;
     if (dc <= 17) return 3;
-    return 4;
+    if (dc <= 20) return 4;
+    return 5;
 }
 
 function logTailIncludes(str, count) {
@@ -1166,7 +1167,19 @@ const encounters = [
     { 
         name:"Boar Charge", icon:"🐗", stat:"Strong", dc:15,
         flavor:"Two tusks barrel forward. Only thought: yummy if roasted." 
-    }
+    },
+
+    { 
+        name:"Tribulation", icon:"🌀", stat:"Clever", dc:25,
+        flavor:"The heavens do not permit longevity to the thoughtless.",
+        condition: () => {return adv.hp>6;},
+    },
+
+    { 
+        name:"Fire Law", icon:"🌀", stat:"Strong", dc:25,
+        flavor:"Only the strong die young. So decree the heavens.",
+        condition: () => {return adv.strong>6;},
+    },
 
 ];
 
